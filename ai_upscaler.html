@@ -904,11 +904,9 @@
                 const url = document.getElementById('colab-url-input').value.trim();
                 if(url) {
                     localStorage.setItem('nexus_colab_url', url);
-                    alert("Cloud GPU Connected Successfully! Selected External Cloud GPU mode.");
                     document.getElementById('procmode-selected-text').innerText = "External Cloud GPU";
                 } else {
                     localStorage.removeItem('nexus_colab_url');
-                    alert("Cloud GPU Disconnected. Reverting to Local Processing.");
                     document.getElementById('procmode-selected-text').innerText = document.getElementById('live-gpu-name').innerText.includes('Off') ? 'CPU Precision (Slow)' : 'GPU Accelerated (Fast)';
                 }
                 document.getElementById('colab-modal').classList.add('hidden');

@@ -1,4 +1,5 @@
 import os
+import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import logic_ai_upscaler
@@ -60,7 +61,6 @@ def process_upscale():
         colab_url = request.form.get('colab_url', None)
         if colab_url:
             progress_tracker[task_id] = {"percent": 10, "log": "Connecting to Cloud GPU Proxy..."}
-            import requests
             try:
                 with open(input_path, 'rb') as f:
                     files = {'image': (file.filename, f, file.mimetype)}
@@ -69,7 +69,10 @@ def process_upscale():
                     
                     form_data = request.form.to_dict()
                     # Add Bypass headers for localtunnel/cloudflare
-                    headers = {'Bypass-Tunnel-Reminder': 'true'}
+                    headers = {
+                        'Bypass-Tunnel-Reminder': 'true',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
                     response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
                     
                     if response.status_code == 200:
