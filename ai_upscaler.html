@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
         :root { --primary: #2563EB; --accent: #7C3AED; --bg-color: #F8FAFC; }
@@ -413,53 +414,40 @@
                         <div id="batch-file-list" class="hidden absolute inset-0 overflow-y-auto pro-scrollbar p-6 grid grid-cols-3 gap-6 content-start canvas-bg">
                             <!-- Batch items injected here -->
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==========================================
-             LIGHTBOX MODAL FOR BATCH PREVIEW
-             ========================================== -->
-        <div id="lightbox-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-slate-950 transition-opacity opacity-0" onclick="closeLightbox()">
-            <button class="absolute top-6 right-20 w-12 h-12 bg-white/10 hover:bg-blue-500 rounded-full flex items-center justify-center text-white transition shadow-lg z-[210] hidden" onclick="toggleLightboxZoom(event)" id="lightbox-zoom-btn">
-                <i class="ph-bold ph-magnifying-glass-plus text-xl" id="lightbox-zoom-icon"></i>
-            </button>
-            <button class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition shadow-lg z-[210]" onclick="closeLightbox()">
-                <i class="ph-bold ph-x text-2xl"></i>
-            </button>
-            <div class="absolute top-6 left-6 text-white bg-black/50 px-4 py-2 rounded-lg font-bold text-sm shadow-lg backdrop-blur-md z-[210]" id="lightbox-title">Preview</div>
-            
-            <div class="relative overflow-auto custom-scrollbar bg-black w-full h-full mx-auto hidden flex-col items-center justify-center" id="lightbox-slider-wrapper" onclick="event.stopPropagation()">
-                
-                <div id="lightbox-inner-content" class="relative flex-shrink-0 m-auto">
-                    <!-- Upscaled (Bottom Layer) -->
-                    <img id="lightbox-upscaled-img" src="" class="max-w-full max-h-screen object-contain pointer-events-none block">
-                    
-                    <!-- Original (Top Layer, Clipped) -->
-                    <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none">
-                        <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none">
-                    </div>
-
-                    <!-- Handle -->
-                    <div id="lightbox-compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
-                        <div class="w-10 h-10 bg-white rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] border border-slate-200 flex items-center justify-center text-blue-600">
-                            <i class="ph-bold ph-arrows-left-right text-lg"></i>
+                        
+                        <!-- Inline Batch Preview State -->
+                        <div id="batch-preview-state" class="hidden absolute inset-0 z-50 flex-col bg-slate-900 transition-opacity">
+                            <div class="border-b border-slate-700/50 bg-slate-900 flex justify-between items-center p-3 shrink-0 z-20">
+                                <div class="text-white font-bold text-sm flex items-center gap-2">
+                                    <button onclick="closeLightbox()" class="text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-slate-800 transition"><i class="ph-bold ph-arrow-left"></i> Back to Grid</button>
+                                    <div class="w-px h-4 bg-slate-700 mx-1"></div>
+                                    <span id="lightbox-title">Preview</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="w-8 h-8 bg-slate-800 hover:bg-blue-600 rounded-lg flex items-center justify-center text-white transition shadow-sm hidden" onclick="toggleLightboxZoom(event)" id="lightbox-zoom-btn">
+                                        <i class="ph-bold ph-magnifying-glass-plus text-lg" id="lightbox-zoom-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="relative overflow-auto custom-scrollbar w-full h-full flex-col items-center justify-center flex-1 bg-slate-900" id="lightbox-slider-wrapper">
+                                <div id="lightbox-inner-content" class="relative flex-shrink-0 m-auto">
+                                    <img id="lightbox-upscaled-img" src="" class="max-w-full max-h-screen object-contain pointer-events-none block">
+                                    <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none">
+                                        <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none">
+                                    </div>
+                                    <div id="lightbox-compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
+                                        <div class="w-10 h-10 bg-white rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] border border-slate-200 flex items-center justify-center text-blue-600">
+                                            <i class="ph-bold ph-arrows-left-right text-lg"></i>
+                                        </div>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-30" id="lightbox-slider" oninput="syncLightboxSplit()">
+                                </div>
+                                <div class="absolute top-4 left-4 bg-slate-800/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] border border-white/10 shadow-lg pointer-events-none">Original</div>
+                                <div class="absolute top-4 right-4 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Slider -->
-                    <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-30" id="lightbox-slider" oninput="syncLightboxSplit()">
-                </div>
-                
-                <div class="fixed top-24 left-10 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] border border-white/10 shadow-lg pointer-events-none">Original</div>
-                <div class="fixed top-24 right-10 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
-            </div>
-            
-            <!-- Single Image View -->
-            <div id="lightbox-single-wrapper" class="relative overflow-auto custom-scrollbar w-full h-full hidden flex-col items-center justify-center bg-black" onclick="event.stopPropagation()">
-                <div id="lightbox-single-inner" class="relative flex-shrink-0 m-auto">
-                    <img id="lightbox-single-img" src="" class="max-w-full max-h-screen object-contain drop-shadow-2xl pointer-events-none block">
                 </div>
             </div>
         </div>
@@ -765,9 +753,6 @@
                             <div id="batch-overlay-${idx}" class="absolute inset-0 bg-slate-900/40 hidden flex items-center justify-center backdrop-blur-[2px]">
                                 <i class="ph-bold ph-spinner animate-spin text-white text-3xl"></i>
                             </div>
-                            <div id="batch-done-${idx}" class="absolute inset-0 bg-emerald-500/90 hidden flex items-center justify-center backdrop-blur-sm">
-                                <i class="ph-bold ph-check-circle text-white text-4xl shadow-sm rounded-full drop-shadow-md"></i>
-                            </div>
                         </div>
                         <div class="text-xs font-bold text-slate-700 truncate px-1 mt-1">${f.name}</div>
                         <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -880,13 +865,73 @@
             if(lbSlider) lbSlider.addEventListener('input', syncLightboxSplit);
             window.addEventListener('resize', syncLightboxSplit);
 
+            function openLightbox(idx) {
+                const f = batchFiles[idx];
+                const r = batchResults[idx];
+                
+                document.getElementById('lightbox-title').innerText = f.name;
+                const origUrl = URL.createObjectURL(f);
+                
+                const upImg = document.getElementById('lightbox-upscaled-img');
+                const origImg = document.getElementById('lightbox-original-img');
+                const sliderWrapper = document.getElementById('lightbox-slider-wrapper');
+                
+                origImg.src = origUrl;
+                
+                if (r && r.status === 'success') {
+                    upImg.src = r.processed_path + "?t=" + new Date().getTime();
+                    document.getElementById('lightbox-slider').value = 50;
+                    syncLightboxSplit();
+                } else {
+                    upImg.src = origUrl;
+                    document.getElementById('lightbox-slider').value = 0;
+                    syncLightboxSplit();
+                }
+
+                // Reset zoom state
+                isLightboxZoomed = false;
+                updateZoomClasses();
+
+                const previewState = document.getElementById('batch-preview-state');
+                const fileList = document.getElementById('batch-file-list');
+                
+                fileList.classList.add('hidden');
+                previewState.classList.remove('hidden');
+                previewState.classList.add('flex');
+            }
+
             function closeLightbox() {
-                const modal = document.getElementById('lightbox-modal');
-                modal.classList.add('opacity-0');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }, 300);
+                const previewState = document.getElementById('batch-preview-state');
+                const fileList = document.getElementById('batch-file-list');
+                
+                previewState.classList.add('hidden');
+                previewState.classList.remove('flex');
+                fileList.classList.remove('hidden');
+            }
+
+            function setBatchView(mode, btn) {
+                const parent = btn.closest('.flex');
+                parent.querySelectorAll('.view-btn').forEach(b => {
+                    b.classList.remove('active', 'text-blue-400', 'bg-slate-900', 'shadow-sm');
+                    b.classList.add('text-slate-400');
+                });
+                btn.classList.add('active', 'text-blue-400', 'bg-slate-900', 'shadow-sm');
+                btn.classList.remove('text-slate-400');
+                
+                const splitWrapper = document.getElementById('lightbox-slider-wrapper');
+                const singleWrapper = document.getElementById('lightbox-single-wrapper');
+                
+                if(mode === 'split') {
+                    splitWrapper.classList.remove('hidden');
+                    splitWrapper.classList.add('flex');
+                    singleWrapper.classList.add('hidden');
+                    singleWrapper.classList.remove('flex');
+                } else {
+                    splitWrapper.classList.add('hidden');
+                    splitWrapper.classList.remove('flex');
+                    singleWrapper.classList.remove('hidden');
+                    singleWrapper.classList.add('flex');
+                }
             }
 
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.border = '2px dashed #3b82f6'; });
@@ -1026,7 +1071,6 @@
             async function processSingleBatchImage(idx) {
                 const file = batchFiles[idx];
                 const overlay = document.getElementById(`batch-overlay-${idx}`);
-                const doneOver = document.getElementById(`batch-done-${idx}`);
                 const progBar = document.getElementById(`batch-prog-${idx}`);
                 
                 overlay.classList.remove('hidden');
@@ -1085,7 +1129,6 @@
                     overlay.classList.add('hidden');
                     
                     if (result.status === 'success') {
-                        doneOver.classList.remove('hidden');
                         progBar.style.width = '100%';
                         progBar.classList.replace('bg-blue-500', 'bg-emerald-500');
                         document.getElementById(`batch-log-${idx}`).innerText = "Success! Image Upscaled.";
@@ -1102,30 +1145,41 @@
                     document.getElementById(`batch-log-${idx}`).innerText = "Error: Network Timeout / Tunnel Dead";
                     document.getElementById(`batch-log-${idx}`).classList.replace('text-slate-400', 'text-red-500');
                 }
-            }
-
             async function downloadAllBatch() {
                 const dlBtn = document.getElementById('batch-download-btn');
                 const origHtml = dlBtn.innerHTML;
-                dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Downloading...';
+                dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
                 dlBtn.disabled = true;
                 
-                for (let i = 0; i < batchResults.length; i++) {
-                    const res = batchResults[i];
-                    if(res && res.processed_path) {
-                        try {
-                            const link = document.createElement('a');
-                            link.href = window.location.origin + res.processed_path;
-                            link.download = res.filename || 'upscaled_image';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            // Delay 1 second to prevent browser blocking multiple downloads
-                            await new Promise(r => setTimeout(r, 1000));
-                        } catch(e) {
-                            console.error("Batch download error: ", e);
+                try {
+                    const zip = new JSZip();
+                    let hasFiles = false;
+                    for (let i = 0; i < batchResults.length; i++) {
+                        const res = batchResults[i];
+                        if(res && res.processed_path) {
+                            try {
+                                const response = await fetch(window.location.origin + res.processed_path);
+                                const blob = await response.blob();
+                                zip.file(res.filename || `upscaled_${i}.png`, blob);
+                                hasFiles = true;
+                            } catch(e) {
+                                console.error("Error fetching file for zip:", e);
+                            }
                         }
                     }
+                    if (hasFiles) {
+                        dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
+                        const content = await zip.generateAsync({type:"blob"});
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(content);
+                        link.download = "Nexus_Batch_Upscaled.zip";
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(link.href);
+                    }
+                } catch(err) {
+                    console.error("Zip generation error:", err);
                 }
                 
                 dlBtn.innerHTML = origHtml;
