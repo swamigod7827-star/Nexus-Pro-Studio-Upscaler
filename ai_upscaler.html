@@ -902,14 +902,37 @@
             
             function saveColabUrl() {
                 const url = document.getElementById('colab-url-input').value.trim();
+                const btn = document.querySelector('button[onclick="saveColabUrl()"]');
+                
                 if(url) {
                     localStorage.setItem('nexus_colab_url', url);
-                    document.getElementById('procmode-selected-text').innerText = "External Cloud GPU";
+                    
+                    // Show small domain name in the dropdown button
+                    try {
+                        const domain = new URL(url).hostname;
+                        document.getElementById('procmode-selected-text').innerHTML = `<i class="ph-fill ph-cloud text-blue-500 mr-1"></i> Cloud: ${domain}`;
+                    } catch(e) {
+                        document.getElementById('procmode-selected-text').innerText = "External Cloud GPU";
+                    }
+                    
+                    // Show success on button temporarily
+                    const oldHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="ph-bold ph-check"></i> Connected Successfully!';
+                    btn.classList.replace('from-blue-600', 'from-emerald-500');
+                    btn.classList.replace('to-purple-600', 'to-emerald-600');
+                    
+                    setTimeout(() => {
+                        document.getElementById('colab-modal').classList.add('hidden');
+                        btn.innerHTML = oldHtml;
+                        btn.classList.replace('from-emerald-500', 'from-blue-600');
+                        btn.classList.replace('to-emerald-600', 'to-purple-600');
+                    }, 1200);
+                    
                 } else {
                     localStorage.removeItem('nexus_colab_url');
                     document.getElementById('procmode-selected-text').innerText = document.getElementById('live-gpu-name').innerText.includes('Off') ? 'CPU Precision (Slow)' : 'GPU Accelerated (Fast)';
+                    document.getElementById('colab-modal').classList.add('hidden');
                 }
-                document.getElementById('colab-modal').classList.add('hidden');
             }
             
             // On load, populate colab input if exists

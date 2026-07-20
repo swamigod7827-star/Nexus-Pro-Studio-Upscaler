@@ -63,33 +63,35 @@ def process_upscale():
             progress_tracker[task_id] = {"percent": 10, "log": "Connecting to Cloud GPU Proxy..."}
             try:
                 with open(input_path, 'rb') as f:
-                    files = {'image': (file.filename, f, file.mimetype)}
-                    colab_endpoint = colab_url.rstrip('/') + '/api/process-upscale'
-                    progress_tracker[task_id] = {"percent": 30, "log": "Uploading image to Cloud GPU..."}
+                    file_bytes = f.read()
                     
-                    form_data = request.form.to_dict()
-                    # Add Bypass headers for localtunnel/cloudflare
-                    headers = {
-                        'Bypass-Tunnel-Reminder': 'true',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    }
-                    response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
+                files = {'image': (file.filename, file_bytes, file.mimetype)}
+                colab_endpoint = colab_url.rstrip('/') + '/api/process-upscale'
+                progress_tracker[task_id] = {"percent": 30, "log": "Uploading image to Cloud GPU..."}
+                
+                form_data = request.form.to_dict()
+                # Add Bypass headers for localtunnel/cloudflare
+                headers = {
+                    'Bypass-Tunnel-Reminder': 'true',
+                    'User-Agent': 'curl/7.68.0'
+                }
+                response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
+                
+                if response.status_code == 200:
+                    progress_tracker[task_id] = {"percent": 90, "log": "Receiving upscaled output from Cloud..."}
+                    import time
+                    orig_name = os.path.splitext(file.filename)[0]
+                    master_file = f"{orig_name}_ColabGPU_{int(time.time())}.jpg"
+                    master_path = os.path.join('static/outputs', master_file)
                     
-                    if response.status_code == 200:
-                        progress_tracker[task_id] = {"percent": 90, "log": "Receiving upscaled output from Cloud..."}
-                        import time
-                        orig_name = os.path.splitext(file.filename)[0]
-                        master_file = f"{orig_name}_ColabGPU_{int(time.time())}.jpg"
-                        master_path = os.path.join('static/outputs', master_file)
+                    with open(master_path, 'wb') as out_f:
+                        out_f.write(response.content)
                         
-                        with open(master_path, 'wb') as out_f:
-                            out_f.write(response.content)
-                            
-                        progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
-                        return jsonify({"status": "success", "image_url": "/" + master_path.replace("\\", "/"), "filename": master_file})
-                    else:
-                        error_msg = f"API returned {response.status_code}: {response.text[:150]}"
-                        raise Exception(error_msg)
+                    progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
+                    return jsonify({"status": "success", "image_url": "/" + master_path.replace("\\", "/"), "filename": master_file})
+                else:
+                    error_msg = f"API returned {response.status_code}: {response.text[:150]}"
+                    raise Exception(error_msg)
             except Exception as e:
                 progress_tracker[task_id] = {"percent": 0, "log": f"Cloud Error: {str(e)}"}
                 return jsonify({'status': 'error', 'message': f"Cloud GPU Error: {str(e)}"})
