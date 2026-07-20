@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Pro | AI Upscaler Studio</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root { --primary: #2563EB; --accent: #7C3AED; --bg-color: #F8FAFC; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: #1E293B; overflow: hidden; }
+        
+        /* Unified Styles */
+        .pro-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .pro-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .pro-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; border: 2px solid #f8fafc; }
+        .pro-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .terminal-scrollbar::-webkit-scrollbar { width: 6px; }
+        .terminal-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .terminal-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .canvas-bg { background-color: #f8fafc; background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+        .pro-slider { appearance: none; width: 100%; height: 6px; background: #E2E8F0; border-radius: 999px; outline: none; }
+        .pro-slider::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; border: 3px solid #2563EB; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.1s; }
+        .pro-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .compare-slider { appearance: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: transparent; outline: none; z-index: 30; cursor: ew-resize; margin: 0; }
+        .compare-slider::-webkit-slider-thumb { appearance: none; width: 40px; height: 100vh; background: transparent; cursor: ew-resize; }
+        .typewriter-text { overflow: hidden; white-space: nowrap; animation: typing 0.5s steps(40, end); }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        .toggle-checkbox:checked { right: 0; border-color: #2563EB; }
+        .toggle-checkbox:checked + .toggle-label { background: #2563EB; }
+    </style>
+</head>
+<body class="flex h-screen w-full selection:bg-blue-100">
+
+    <main class="flex-1 flex flex-col h-full bg-[#F4F7F9] overflow-hidden">
+        <div class="h-[calc(100vh-64px)] w-full overflow-y-auto pro-scrollbar bg-slate-50 relative pb-20">
+            <div class="max-w-[1600px] mx-auto p-6">
+
+                <div class="mb-6 bg-white border border-slate-200 rounded-2xl shadow-sm px-6 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Engine Status: <span class="text-emerald-600">Online</span></span>
+                        </div>
+                        <div class="w-px h-6 bg-slate-200"></div>
+                        <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <i class="ph-fill ph-graphics-card text-blue-500 text-lg"></i>
+                            <span id="live-gpu-name">Detecting Hardware...</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <i class="ph-fill ph-cpu text-purple-500 text-lg"></i>
+                            <span id="live-cpu-status">System Active</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button onclick="document.getElementById('colab-modal').classList.remove('hidden')" class="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold rounded-lg shadow hover:opacity-90 transition-opacity flex items-center gap-2">
+                            🚀 Connect Cloud GPU
+                        </button>
+                        <div class="text-xs font-bold text-slate-400">Nexus AI Core <span class="text-blue-500">v4.0.2</span></div>
+                    </div>
+                </div>
+            
+                <div class="mb-5 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                            Professional AI <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Upscaler Studio</span>
+                        </h1>
+                        <p class="text-slate-500 font-medium text-sm mt-1">Enhance, restore, and upscale images up to 64K using advanced neural networks.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 shadow-sm transition flex items-center gap-2">
+                            <i class="ph-bold ph-floppy-disk text-lg"></i> Save Preset
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-5 relative z-50">
+                    <div class="flex px-2 border-b border-slate-100 overflow-x-auto no-scrollbar">
+                        <button class="setting-tab active px-6 py-3.5 text-sm font-bold text-blue-600 border-b-2 border-blue-600 flex items-center gap-2 transition" onclick="switchTab('primary', this)">
+                            <i class="ph-fill ph-sliders-horizontal"></i> Primary Settings
+                        </button>
+                        <button class="setting-tab px-6 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition flex items-center gap-2" onclick="switchTab('advanced', this)">
+                            <i class="ph-fill ph-faders"></i> Advanced Adjustments
+                        </button>
+                        <button class="setting-tab px-6 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition flex items-center gap-2" onclick="switchTab('face', this)">
+                            <i class="ph-fill ph-user-focus"></i> Face Recovery
+                        </button>
+                        <!-- Export Tab Button MUST have this exact onclick for the redirect to work -->
+                        <button id="export-tab-btn" class="setting-tab px-6 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition flex items-center gap-2" onclick="switchTab('export', this)">
+                            <i class="ph-fill ph-export"></i> Output & Export
+                        </button>
+
+                    </div>
+                
+                    <div class="p-5">
+                        <!-- TAB 1: Primary Settings -->
+                        <div id="tab-primary" class="grid grid-cols-12 gap-6 items-end relative z-[60]">
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Upscale Level</label>
+                                <div onclick="toggleDropdown('upscale-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="upscale-selected-text">4X Standard Upscale</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="upscale-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('upscale', '2X Detail Enhance', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">2X Detail Enhance</li>
+                                        <li onclick="selectOption('upscale', '4X Standard Upscale', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">4X Standard Upscale</li>
+                                        <li onclick="selectOption('upscale', '6X Mid-Tier Resolution', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">6X Mid-Tier Resolution</li>
+                                        <li onclick="selectOption('upscale', '8X Studio Quality', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">8X Studio Quality</li>
+                                        <li onclick="selectOption('upscale', '10X Extreme', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">10X Extreme</li>
+                                        <li onclick="selectOption('upscale', '16X Billboard', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">16X Billboard</li>
+                                        <li onclick="selectOption('upscale', '32K Absolute Vector', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">32K Absolute Vector</li>
+                                        <li onclick="selectOption('upscale', '64K Neural Maximum', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">64K Neural Maximum</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">AI Model Selection</label>
+                                <div onclick="toggleDropdown('aimodel-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="aimodel-selected-text" class="truncate pr-2">RealESRGAN v4 (General)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="aimodel-menu" class="hidden absolute top-full left-0 mt-2 w-full min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('aimodel', 'RealESRGAN v4 (General)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">RealESRGAN v4 (General)</li>
+                                        <li onclick="selectOption('aimodel', 'Anime Sharp (Illustrations)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Anime Sharp (Illustrations)</li>
+                                        <li onclick="selectOption('aimodel', 'CodeFormer (Face Focus)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CodeFormer (Face Focus)</li>
+                                        <li onclick="selectOption('aimodel', 'SwinIR (Texture Detail)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SwinIR (Texture Detail)</li>
+                                        <li onclick="selectOption('aimodel', 'BSRGAN (Real-world)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BSRGAN (Real-world)</li>
+                                        <li onclick="selectOption('aimodel', 'GFPGAN (Portrait)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GFPGAN (Portrait)</li>
+                                        <li onclick="selectOption('aimodel', 'HAT (High Accuracy)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HAT (High Accuracy)</li>
+                                        <li onclick="selectOption('aimodel', 'NAFNet (Fast Restoration)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">NAFNet (Fast Restoration)</li>
+                                        <li onclick="selectOption('aimodel', 'TextMaster (Font Preserver)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TextMaster (Font Preserver)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Processing Mode</label>
+                                <div onclick="toggleDropdown('procmode-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="procmode-selected-text">Auto Detecting...</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="procmode-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('procmode', 'GPU Accelerated (Fast)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GPU Accelerated (Fast)</li>
+                                        <li onclick="selectOption('procmode', 'CPU Precision (Slow)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CPU Precision (Slow)</li>
+                                        <li onclick="selectOption('procmode', 'External Cloud GPU', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors flex items-center gap-2"><i class="ph-fill ph-cloud"></i> External Cloud GPU</li>
+                                        <li onclick="selectOption('procmode', 'TensorRT (Max Performance)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TensorRT (Max Performance)</li>
+                                        <li onclick="selectOption('procmode', 'DirectML (AMD/Intel GPU)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">DirectML (AMD/Intel GPU)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 flex gap-3">
+                                <button id="runUpscaleBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 py-3" onclick="processImage(event)">
+                                    <i class="ph-bold ph-lightning text-lg"></i> Run Upscaler
+                                </button>
+                            </div>
+                        </div>
+                    
+                        <!-- TAB 2: Advanced Enhancements -->
+                        <div id="tab-advanced" class="hidden grid-cols-4 gap-8">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>AI Strength</span><span class="text-blue-600 val">80%</span></div>
+                                <input type="range" min="0" max="100" value="80" class="pro-slider" id="slider-strength" oninput="updateVal(this)">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Noise Reduction</span><span class="text-blue-600 val">45%</span></div>
+                                <input type="range" min="0" max="100" value="45" class="pro-slider" id="slider-noise" oninput="updateVal(this)">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Texture Recovery</span><span class="text-blue-600 val">60%</span></div>
+                                <input type="range" min="0" max="100" value="60" class="pro-slider" id="slider-texture" oninput="updateVal(this)">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Artifact Removal</span><span class="text-blue-600 val">25%</span></div>
+                                <input type="range" min="0" max="100" value="25" class="pro-slider" id="slider-artifact" oninput="updateVal(this)">
+                            </div>
+                        </div>
+                    
+                        <!-- TAB 3: Face Recovery -->
+                        <div id="tab-face" class="hidden grid-cols-3 gap-8 items-center">
+                            <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Enable Face Recovery</h4>
+                                    <p class="text-[10px] text-slate-500 mt-1">Uses CodeFormer for facial details</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="check-face-restore" class="sr-only peer toggle-checkbox" checked>
+                                    <div class="w-10 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Identity Preservation</span><span class="text-blue-600 val">90%</span></div>
+                                <input type="range" min="0" max="100" value="90" class="pro-slider" id="slider-identity" oninput="updateVal(this)">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Natural Skin Tone</span><span class="text-blue-600 val">50%</span></div>
+                                <input type="range" min="0" max="100" value="50" class="pro-slider" id="slider-skin" oninput="updateVal(this)">
+                            </div>
+                        </div>
+                    
+                        <!-- TAB 4: Output & Export -->
+                        <div id="tab-export" class="hidden grid-cols-4 gap-6 items-end relative z-[60]">
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Output Format</label>
+                                <div onclick="toggleDropdown('format-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="format-selected-text" class="truncate pr-2">PNG (Lossless & Transparent)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="format-menu" class="hidden absolute top-full left-0 mt-2 min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar whitespace-nowrap">
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-1 uppercase tracking-widest pointer-events-none">Web & Images</li>
+                                        <li onclick="selectOption('format', 'PNG (Lossless & Transparent)', this)" class="px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">PNG (Lossless & Transparent)</li>
+                                        <li onclick="selectOption('format', 'JPG / JPEG (Standard)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">JPG / JPEG (Standard)</li>
+                                        <li onclick="selectOption('format', 'WEBP (Web Optimized)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">WEBP (Web Optimized)</li>
+                                        <li onclick="selectOption('format', 'BMP (Raw Bitmap)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BMP (Raw Bitmap)</li>
+                                        <li onclick="selectOption('format', 'GIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GIF</li>
+                                        <li onclick="selectOption('format', 'AVIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AVIF</li>
+                                        <li onclick="selectOption('format', 'HEIC / HEIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HEIC / HEIF</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Professional & Print</li>
+                                        <li onclick="selectOption('format', 'TIFF / TIF (High-End Print)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TIFF / TIF (High-End Print)</li>
+                                        <li onclick="selectOption('format', 'PDF (Print Document)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PDF (Print Document)</li>
+                                        <li onclick="selectOption('format', 'EPS (Vector Container)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">EPS (Vector Container)</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Design Wrappers</li>
+                                        <li onclick="selectOption('format', 'PSD / PSB (Photoshop)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PSD / PSB (Photoshop)</li>
+                                        <li onclick="selectOption('format', 'AI (Illustrator)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AI (Illustrator)</li>
+                                        <li onclick="selectOption('format', 'CDR (CorelDRAW)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CDR (CorelDRAW)</li>
+                                        <li onclick="selectOption('format', 'INDD (InDesign)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">INDD (InDesign)</li>
+                                        <li onclick="selectOption('format', 'SVG (Scalable Vector)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SVG (Scalable Vector)</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Camera RAW</li>
+                                        <li onclick="selectOption('format', 'RAW, DNG, CR2, NEF...', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">RAW, DNG, CR2, NEF...</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Color Space</label>
+                                <div onclick="toggleDropdown('color-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="color-selected-text">sRGB (Web)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="color-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('color', 'sRGB (Web)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">sRGB (Web)</li>
+                                        <li onclick="selectOption('color', 'Adobe RGB (Print)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Adobe RGB (Print)</li>
+                                        <li onclick="selectOption('color', 'Display P3', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Display P3</li>
+                                        <li onclick="selectOption('color', 'ProPhoto RGB', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">ProPhoto RGB</li>
+                                        <li onclick="selectOption('color', 'CMYK (Commercial)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CMYK (Commercial)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Print Resolution</label>
+                                <div onclick="toggleDropdown('dpi-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="dpi-selected-text">600 DPI (Studio Print)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="dpi-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('dpi', '72 DPI (Web Only)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">72 DPI (Web Only)</li>
+                                        <li onclick="selectOption('dpi', '300 DPI (Standard)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">300 DPI (Standard)</li>
+                                        <li onclick="selectOption('dpi', '600 DPI (Studio Print)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">600 DPI (Studio Print)</li>
+                                        <li onclick="selectOption('dpi', '1200 DPI (Fine Art)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">1200 DPI (Fine Art)</li>
+                                        <li onclick="selectOption('dpi', '2400 DPI (Micro Detail)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">2400 DPI (Micro Detail)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <button onclick="downloadUpscaledImage()" class="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition py-3 flex items-center justify-center gap-2 shadow-lg">
+                                <i class="ph-bold ph-download-simple"></i> Export Image
+                            </button>
+                        </div>
+
+
+                    </div>
+                </div>
+            
+                <!-- ==========================================
+                     3. DYNAMIC CANVAS AREA
+                     ========================================== -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden" id="canvas-card">
+
+                    <div class="border-b border-slate-100 bg-white flex items-center justify-between p-4 shrink-0 rounded-t-2xl z-20">
+                        <div class="flex items-center gap-4 text-sm font-bold text-slate-700">
+                            <span class="flex items-center gap-2"><i class="ph-bold ph-image text-slate-400"></i> <span id="file-name-display">No Image Loaded</span></span>
+                            <div class="w-px h-4 bg-slate-200"></div>
+                            <span class="text-slate-500">Input: <span id="res-in">--</span></span>
+                            <i class="ph-bold ph-arrow-right text-slate-300"></i>
+                            <span class="text-blue-600">Output: <span id="res-out">--</span></span>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2 mr-2 border-r border-slate-200 pr-4" title="Enable Mouse Wheel Zoom">
+                                <span class="text-xs font-bold text-slate-500">Mouse Wheel Zoom</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="toggle-scroll-zoom" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        
+                            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                                <button class="view-btn active px-4 py-1.5 rounded-md text-xs font-bold text-blue-600 bg-white shadow-sm" onclick="setView('split', this)">Split View</button>
+                                <button class="view-btn px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800" onclick="setView('single', this)">Single</button>
+                            </div>
+                            <div class="w-px h-6 bg-slate-200"></div>
+                            <button onclick="changeZoom(-10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-minus"></i></button>
+                            <span id="zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center">100%</span>
+                            <button onclick="changeZoom(10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-plus"></i></button>
+                        </div>
+                    </div>
+                
+                    <div class="w-full relative canvas-bg transition-all overflow-hidden" style="min-height: 400px;" id="drop-zone">
+
+                        <div class="w-full flex flex-col items-center justify-center py-32 cursor-pointer transition-all hover:bg-blue-50/30" id="upload-state" onclick="document.getElementById('file-input').click()">
+                            <div class="w-20 h-20 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm border border-slate-200 transition-transform hover:scale-110">
+                                <i class="ph-bold ph-upload-simple text-4xl"></i>
+                            </div>
+                            <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Drag & Drop to Workspace</h2>
+                            <p class="text-slate-500 font-medium text-sm mb-6">Supports PNG, JPG, RAW, WEBP up to 50MB</p>
+                            <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleUpload(this.files[0])">
+                            <button class="px-8 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 shadow-sm transition">
+                                Browse Computer
+                            </button>
+                        </div>
+                    
+                        <div class="hidden w-full h-full p-4 flex-col items-center justify-center relative overflow-hidden" id="preview-state">
+                            <div class="transition-transform duration-100 ease-out w-full h-full flex items-center justify-center" id="zoom-container" style="transform: scale(1); transform-origin: center center;">
+                                <div class="relative shadow-2xl overflow-hidden rounded-lg bg-slate-900 mx-auto w-full h-full flex items-center justify-center" id="image-wrapper">
+                                    <img id="upscaled-img" src="" class="w-full h-full block pointer-events-none object-contain" alt="Upscaled">
+                                    <div id="compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.3)] z-10 pointer-events-none">
+                                        <img id="original-img" src="" class="absolute top-0 left-0 h-full max-w-none object-contain" alt="Original">
+                                    </div>
+                                    <div id="compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
+                                        <div class="w-8 h-8 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center text-blue-600">
+                                            <i class="ph-bold ph-arrows-left-right text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="50" class="compare-slider" id="compare-slider">
+                                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-20 border border-white/10">Original</div>
+                                    <div class="absolute top-4 right-4 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-20 shadow-lg border border-white/10">AI Upscaled</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bottom-action-bar" class="hidden border-t border-slate-100 bg-white items-center justify-between p-4 shrink-0 rounded-b-2xl z-20 relative">
+                        <span class="text-sm font-bold text-slate-800" id="bottom-file-name">filename.png</span>
+                        <div class="flex gap-2">
+                            <button class="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition" title="Preview">
+                                <i class="ph-bold ph-eye"></i>
+                            </button>
+                            <button class="w-8 h-8 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center transition" title="Delete Image" onclick="resetCanvas()">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             PROCESSING PROGRESS MODAL
+             ========================================== -->
+        <div id="progress-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/70 backdrop-blur-md transition-opacity opacity-0 duration-300">
+            <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl transform scale-95 transition-transform duration-300 relative" id="progress-modal-box">
+
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100 relative">
+                        <div id="modal-top-spinner" class="absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent animate-spin transition-colors"></div>
+                        <i id="modal-top-icon" class="ph-fill ph-cpu text-3xl text-blue-600 z-10 relative"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">Nexus AI Engine Running</h2>
+                    <p class="text-sm text-slate-500 mt-1">Applying <span id="modal-model-name" class="font-bold text-blue-600">Model</span> at <span id="modal-factor-name" class="font-bold text-slate-700">4x</span></p>
+                </div>
+
+                <div class="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden border border-slate-200">
+                    <div id="progress-bar-fill" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+                <div class="flex justify-between text-xs font-bold text-slate-500 mb-6">
+                    <span id="progress-text-percent">0% Complete</span>
+                    <span id="progress-text-est">Est: <span class="text-blue-600">Calculating...</span></span>
+                </div>
+            
+                <div class="bg-slate-900 rounded-xl p-5 h-48 overflow-y-auto terminal-scrollbar font-mono text-xs text-slate-300 space-y-3" id="terminal-steps">
+                    <!-- Steps injected by JS -->
+                </div>
+
+                <!-- Two Action Buttons as requested -->
+                <div class="flex gap-3 mt-6 hidden" id="modal-success-btn-group">
+                    <button onclick="closeProgressModal()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3 rounded-xl transition shadow-sm flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-eye text-lg"></i> View on Canvas
+                    </button>
+                    <button onclick="goToExportTab()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-sliders-horizontal text-lg"></i> Download Output
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             JAVASCRIPT FUNCTIONALITY
+             ========================================== -->
+        <script>
+            let currentProcessedImageUrl = null;
+            let currentProcessedFilename = null;
+            let currentMasterImageUrl = null;
+        
+            document.addEventListener("DOMContentLoaded", function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    let hasHighEndGPU = false;
+                    let gpuName = "Generic CPU/Basic GPU";
+                
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            gpuName = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+                            if (gpuName.includes('nvidia') || gpuName.includes('amd') || gpuName.includes('radeon') || gpuName.includes('apple') || gpuName.includes('rtx')) {
+                                hasHighEndGPU = true;
+                            }
+                        }
+                    }
+                
+                    const procModeEl = document.getElementById('procmode-selected-text');
+                    const liveGpuEl = document.getElementById('live-gpu-name');
+                    const liveCpuEl = document.getElementById('live-cpu-status');
+                
+                    const savedUrl = localStorage.getItem('nexus_colab_url');
+                
+                    if (hasHighEndGPU) {
+                        if (!savedUrl) {
+                            procModeEl.innerText = "GPU Accelerated (Fast)";
+                        } else {
+                            procModeEl.innerText = "External Cloud GPU";
+                        }
+                        document.getElementById('procmode-menu').querySelector('li:nth-child(1)').className = "px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors";
+                        if(liveGpuEl) liveGpuEl.innerText = gpuName.split(' ')[0] + " Active";
+                        if(liveCpuEl) liveCpuEl.innerText = "Optimized";
+                    } else {
+                        if (!savedUrl) {
+                            procModeEl.innerText = "CPU Precision (Slow)";
+                        } else {
+                            procModeEl.innerText = "External Cloud GPU";
+                        }
+                        document.getElementById('procmode-menu').querySelector('li:nth-child(2)').className = "px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors";
+                        if(liveGpuEl) liveGpuEl.innerText = "Basic GPU / Off";
+                        if(liveCpuEl) liveCpuEl.innerText = "CPU Handling";
+                    }
+                } catch (e) {
+                    document.getElementById('procmode-selected-text').innerText = "GPU Accelerated (Fast)";
+                    document.getElementById('live-gpu-name').innerText = "Hardware Active";
+                }
+            });
+        
+            function switchTab(tabName, btn) {
+                document.querySelectorAll('.setting-tab').forEach(b => {
+                    b.classList.remove('active', 'text-blue-600', 'border-blue-600');
+                    b.classList.add('text-slate-500', 'border-transparent');
+                });
+                btn.classList.add('active', 'text-blue-600', 'border-blue-600');
+                btn.classList.remove('text-slate-500', 'border-transparent');
+            
+                const allTabs = ['tab-primary', 'tab-advanced', 'tab-face', 'tab-export', 'tab-server'];
+                allTabs.forEach(t => {
+                    const el = document.getElementById(t);
+                    if(el) {
+                        el.classList.add('hidden');
+                        el.classList.remove('grid');
+                    }
+                });
+            
+                const target = document.getElementById('tab-' + tabName);
+                if(target) {
+                    target.classList.remove('hidden');
+                    target.classList.add('grid');
+                }
+            }
+        
+            // Modal Button Redirect Logic
+            function goToExportTab() {
+                closeProgressModal();
+                const exportTabBtn = document.getElementById('export-tab-btn');
+                if (exportTabBtn) {
+                    switchTab('export', exportTabBtn);
+                }
+            }
+        
+            let currentZoom = 100;
+            const zoomContainer = document.getElementById('zoom-container');
+        
+            function updateZoomUI() {
+                document.getElementById('zoom-text').innerText = Math.round(currentZoom) + '%';
+                zoomContainer.style.transform = `scale(${currentZoom / 100})`;
+            }
+        
+            function changeZoom(amount) {
+                currentZoom += amount;
+                if (currentZoom < 10) currentZoom = 10; 
+                updateZoomUI();
+            }
+        
+            document.getElementById('preview-state').addEventListener('wheel', (e) => {
+                const isZoomEnabled = document.getElementById('toggle-scroll-zoom').checked;
+                if (!isZoomEnabled) return; 
+
+                e.preventDefault(); 
+                const delta = e.deltaY > 0 ? -10 : 10; 
+                currentZoom += delta;
+                if (currentZoom < 10) currentZoom = 10;
+                updateZoomUI();
+            });
+        
+            function updateVal(slider) {
+                const span = slider.previousElementSibling.querySelector('.val');
+                if(span) span.innerText = slider.value + '%';
+            
+                const strength = document.getElementById('slider-strength').value;
+                const texture = document.getElementById('slider-texture').value;
+                const contrast = 100 + (strength - 50) * 0.4;
+                const saturate = 100 + (texture - 50) * 0.5;
+
+                const upImg = document.getElementById('upscaled-img');
+                if(upImg) upImg.style.filter = `contrast(${contrast}%) saturate(${saturate}%)`;
+            }
+        
+            const dropZone = document.getElementById('drop-zone');
+            const uploadState = document.getElementById('upload-state');
+            const previewState = document.getElementById('preview-state');
+            const bottomBar = document.getElementById('bottom-action-bar');
+            const origImg = document.getElementById('original-img');
+            const upImg = document.getElementById('upscaled-img');
+
+            function handleUpload(file) {
+                if(file) {
+                    const url = URL.createObjectURL(file);
+                
+                    origImg.src = url;
+                    upImg.src = url; 
+                
+                    // Image load hone par wrapper ko reset karein
+                    const img = new Image();
+                    img.onload = function() {
+                        document.getElementById('res-in').innerText = this.width + "x" + this.height;
+                        // Canvas container ko reset karein taaki stretch na ho
+                        document.getElementById('image-wrapper').style.width = '100%';
+                    };
+                    img.src = url;
+                
+                    document.getElementById('file-name-display').innerText = file.name;
+                    document.getElementById('bottom-file-name').innerText = file.name;
+
+                    uploadState.classList.add('hidden');
+                    uploadState.classList.remove('flex');
+                    previewState.classList.remove('hidden');
+                    previewState.classList.add('flex');
+                    bottomBar.classList.remove('hidden');
+                    bottomBar.classList.add('flex');
+
+                    currentZoom = 100;
+                    updateZoomUI();
+                    setTimeout(syncSplit, 50);
+                }
+            }
+        
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.border = '2px dashed #3b82f6'; });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.border = 'none'; });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.border = 'none';
+                if(e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files[0]);
+            });
+        
+            const slider = document.getElementById('compare-slider');
+            const clip = document.getElementById('compare-clip');
+            const handle = document.getElementById('compare-handle');
+            const wrapper = document.getElementById('image-wrapper');
+        
+            function syncSplit() {
+                const val = slider.value;
+                clip.style.width = val + '%';
+                handle.style.left = val + '%';
+                if(wrapper) origImg.style.width = wrapper.offsetWidth + 'px';
+            }
+            slider.addEventListener('input', syncSplit);
+            window.addEventListener('resize', syncSplit);
+        
+            function setView(mode, btn) {
+                document.querySelectorAll('.view-btn').forEach(b => {
+                    b.classList.remove('active', 'text-blue-600', 'bg-white', 'shadow-sm');
+                    b.classList.add('text-slate-500');
+                });
+                btn.classList.add('active', 'text-blue-600', 'bg-white', 'shadow-sm');
+                btn.classList.remove('text-slate-500');
+            
+                if(mode === 'single') {
+                    clip.style.width = '0%';
+                    handle.style.display = 'none';
+                    slider.style.display = 'none';
+                } else {
+                    clip.style.width = slider.value + '%';
+                    handle.style.display = 'flex';
+                    slider.style.display = 'block';
+                }
+            }
+        
+            function toggleDropdown(menuId, event) {
+                event.stopPropagation();
+                const menu = document.getElementById(menuId);
+                const isHidden = menu.classList.contains('hidden');
+                document.querySelectorAll('[id$="-menu"]').forEach(m => m.classList.add('hidden'));
+                if (isHidden) menu.classList.remove('hidden');
+            }
+        
+            function selectOption(dropdownName, value, element) {
+                const selectedText = document.getElementById(`${dropdownName}-selected-text`);
+                if(selectedText) selectedText.textContent = value;
+
+                const menu = document.getElementById(`${dropdownName}-menu`);
+                if(menu) {
+                    menu.querySelectorAll('li').forEach(item => {
+                        if(!item.classList.contains('pointer-events-none')) {
+                            item.className = "px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors";
+                        }
+                    });
+                    element.className = "px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors";
+                    menu.classList.add('hidden');
+                }
+            }
+            window.addEventListener('click', () => document.querySelectorAll('[id$="-menu"]').forEach(m => m.classList.add('hidden')));
+        
+            function downloadUpscaledImage() {
+                if (!currentMasterImageUrl) {
+                    alert("Please wait for the process to finish.");
+                    return;
+                }
+            
+                const btn = document.querySelector('button[onclick="downloadUpscaledImage()"]');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Downloading...`;
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    try {
+                        const link = document.createElement('a');
+                        // Fix for DNS error: window.location.origin forces the correct server address
+                        link.href = window.location.origin + currentMasterImageUrl; 
+                        link.download = currentProcessedFilename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (error) {
+                        alert("Download Failed.");
+                    } finally {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                }, 500);
+            }
+        
+            const progressModal = document.getElementById('progress-modal');
+            const modalBox = document.getElementById('progress-modal-box');
+            const terminal = document.getElementById('terminal-steps');
+
+            async function processImage(event) {
+                event.preventDefault();
+                        
+                if (uploadState.classList.contains('flex') || !uploadState.classList.contains('hidden')) {
+                    alert("Please drag and drop an image first.");
+                    return;
+                }
+            
+                const fileInput = document.getElementById('file-input');
+                if (fileInput.files.length === 0) {
+                    alert("No file selected.");
+                    return;
+                }
+                const imageFile = fileInput.files[0];
+            
+                const factor = document.getElementById('upscale-selected-text').innerText;
+                const model = document.getElementById('aimodel-selected-text').innerText;
+                const mode = document.getElementById('procmode-selected-text').innerText;
+            
+                const strength = document.getElementById('slider-strength').value;
+                const noise = document.getElementById('slider-noise').value;
+                const texture = document.getElementById('slider-texture').value;
+                const artifact = document.getElementById('slider-artifact').value;
+            
+                const faceEnable = document.getElementById('check-face-restore').checked;
+                const faceIdentity = document.getElementById('slider-identity').value;
+                const faceSkin = document.getElementById('slider-skin').value;
+            
+                const exportFormat = document.getElementById('format-selected-text').innerText;
+                const exportColor = document.getElementById('color-selected-text').innerText;
+                const exportDPI = document.getElementById('dpi-selected-text').innerText;
+            
+                // 🚀 NAYA: Generate Unique Task ID for Real-Time Tracking
+                const taskId = "task_" + Math.random().toString(36).substr(2, 9);
+            
+                const formData = new FormData();
+                formData.append('image', imageFile);
+                formData.append('task_id', taskId); // Task ID backend ko bhej rahe hain
+                formData.append('factor', factor);
+                formData.append('model', model);
+                formData.append('mode', mode);
+                formData.append('settings', JSON.stringify({ strength: strength, noise: noise, texture: texture, artifact: artifact }));
+                formData.append('face', JSON.stringify({ enabled: faceEnable, identity: faceIdentity, skin_tone: faceSkin }));
+                formData.append('export', JSON.stringify({ format: exportFormat, color_space: exportColor, dpi: exportDPI }));
+                
+                if (mode === 'External Cloud GPU') {
+                    const colabUrl = localStorage.getItem('nexus_colab_url');
+                    if (!colabUrl) {
+                        alert("Please connect a Cloud GPU url first from the top right button.");
+                        return;
+                    }
+                    formData.append('colab_url', colabUrl);
+                }
+            
+
+                
+                document.getElementById('modal-model-name').innerText = model;
+                document.getElementById('modal-factor-name').innerText = factor;
+            
+                // Reset Modal Animations
+                terminal.innerHTML = "";
+                updateProgressBar(0);
+                document.getElementById('progress-text-est').innerHTML = "Est: <span class='text-blue-600'>Calculating...</span>";
+                document.getElementById('modal-success-btn-group').classList.add('hidden');
+            
+                const topSpinner = document.getElementById('modal-top-spinner');
+                const topIcon = document.getElementById('modal-top-icon');
+                topSpinner.className = "absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent animate-spin transition-colors";
+                topSpinner.style.backgroundColor = "transparent";
+                topIcon.className = "ph-fill ph-cpu text-3xl text-blue-600 z-10 relative";
+            
+                progressModal.classList.remove('hidden');
+                progressModal.classList.add('flex');
+                setTimeout(() => {
+                    progressModal.classList.remove('opacity-0');
+                    modalBox.classList.remove('scale-95');
+                }, 10);
+            
+                // ==============================================================
+                // 🚀 REAL-TIME TRACKING (Polling the Backend)
+                // ==============================================================
+                let isProcessing = true;
+                let lastLog = "";
+            
+                // Ye interval har 1 second mein backend se status mangega
+                const statusInterval = setInterval(async () => {
+                    if (!isProcessing) return;
+                    
+                    try {
+                        const statusRes = await fetch(`/api/progress?task_id=${taskId}`);
+                        const statusData = await statusRes.json();
+                        
+                        if (statusData.percent !== undefined) {
+                            updateProgressBar(statusData.percent);
+                        }
+                        
+                        // Agar naya log aaya hai tabhi terminal mein dikhao
+                        if (statusData.log && statusData.log !== lastLog) {
+                            appendTerminalStep(statusData.log);
+                            lastLog = statusData.log;
+                        }
+                    } catch (e) {
+                        console.log("Waiting for server response...");
+                    }
+                }, 1000);
+            
+                // 🚀 SENDING THE ACTUAL POST REQUEST
+                try {
+                    const fetchPromise = fetch('/api/process-upscale', {
+                        method: 'POST',
+                        body: formData
+                    });
+                
+                    const response = await fetchPromise;
+                    const data = await response.json();
+                    
+                    // Processing done, stop asking for status
+                    isProcessing = false;
+                    clearInterval(statusInterval);
+                
+                    if (data.status === 'success') {
+                        updateProgressBar(100);
+                        appendTerminalStep("[✓] Final Masterpiece Generated and Exported.");
+                    
+                        const allSteps = terminal.querySelectorAll('div');
+                        allSteps.forEach(s => {
+                            const icon = s.querySelector('i');
+                            if(icon && icon.classList.contains('ph-spinner')) {
+                                icon.className = "ph-bold ph-check text-emerald-400";
+                            }
+                        });
+                    
+                        const finalStep = document.createElement('div');
+                        finalStep.className = "flex items-center gap-2 mt-2";
+                        finalStep.innerHTML = `<i class="ph-bold ph-check-circle text-emerald-500 text-lg"></i> <span class="text-emerald-400 font-bold typewriter-text">Process Complete. Masterpiece Ready.</span>`;
+                        terminal.appendChild(finalStep);
+                        terminal.scrollTop = terminal.scrollHeight;
+                    
+                        document.getElementById('progress-text-est').innerHTML = "<span class='text-emerald-600'>Done!</span>";
+                        document.getElementById('modal-success-btn-group').classList.remove('hidden');
+                    
+                        topSpinner.classList.remove('animate-spin', 'border-t-transparent', 'border-blue-500');
+                        topSpinner.classList.add('border-emerald-500');
+                        topSpinner.style.backgroundColor = '#10b981';
+                        topIcon.className = "ph-bold ph-check text-3xl text-white z-10 relative";
+                    
+                        currentProcessedImageUrl = data.output_path; 
+                        currentMasterImageUrl = data.master_file;     
+                        currentProcessedFilename = data.filename;     
+                    
+                        if (currentProcessedImageUrl.startsWith('data:image')) {
+                            document.getElementById('upscaled-img').src = currentProcessedImageUrl;
+                        } else {
+                            document.getElementById('upscaled-img').src = currentProcessedImageUrl + "?t=" + new Date().getTime(); 
+                        }
+                    
+                        if(data.resolution) {
+                            document.getElementById('res-out').innerText = data.resolution + " (AI)";
+                        }
+                    } else {
+                        appendTerminalError(data.message);
+                        document.getElementById('progress-text-est').innerHTML = "<span class='text-red-500'>Failed</span>";
+                        document.getElementById('progress-bar-fill').classList.replace('from-blue-500', 'from-red-500');
+                        document.getElementById('progress-bar-fill').classList.replace('to-purple-500', 'to-red-600');
+                    }
+                
+                } catch (error) {
+                    isProcessing = false;
+                    clearInterval(statusInterval);
+                    appendTerminalError("Server connection failed. Is app.py running?");
+                    document.getElementById('progress-text-est').innerHTML = "<span class='text-red-500'>Error</span>";
+                }
+            }
+        
+            function appendTerminalStep(text) {
+                const step = document.createElement('div');
+                step.className = "flex items-center gap-2 transform transition-all duration-300 translate-y-0 opacity-100";
+                step.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-blue-400"></i> <span class="typewriter-text">${text}</span>`;
+                terminal.appendChild(step);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        
+            function appendTerminalError(text) {
+                const step = document.createElement('div');
+                step.className = "flex items-center gap-2 text-red-400 mt-2";
+                step.innerHTML = `<i class="ph-bold ph-warning-circle text-lg"></i> <span class="font-bold">SYSTEM ERROR: ${text}</span>`;
+                terminal.appendChild(step);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        
+            function updateProgressBar(percent) {
+                document.getElementById('progress-bar-fill').style.width = percent + '%';
+                document.getElementById('progress-text-percent').innerText = percent + '% Complete';
+            }
+        
+            function closeProgressModal() {
+                progressModal.classList.add('opacity-0');
+                modalBox.classList.add('scale-95');
+                setTimeout(() => {
+                    progressModal.classList.add('hidden');
+                    progressModal.classList.remove('flex');
+                }, 300);
+            }
+        
+            function resetCanvas() {
+                previewState.classList.add('hidden');
+                previewState.classList.remove('flex');
+                bottomBar.classList.add('hidden');
+                bottomBar.classList.remove('flex');
+                uploadState.classList.remove('hidden');
+                uploadState.classList.add('flex');
+                document.getElementById('file-input').value = "";
+                document.getElementById('file-name-display').innerText = "No Image Loaded";
+                document.getElementById('res-in').innerText = "--";
+                document.getElementById('res-out').innerText = "--";
+                currentProcessedImageUrl = null;
+                currentZoom = 100;
+                updateZoomUI();
+            }
+        
+
+        
+            function goToExportTab() {
+                closeProgressModal();
+                const exportTabBtn = document.getElementById('export-tab-btn');
+                if (exportTabBtn) {
+                    switchTab('export', exportTabBtn);
+                }
+            }
+            
+            function saveColabUrl() {
+                const url = document.getElementById('colab-url-input').value.trim();
+                if(url) {
+                    localStorage.setItem('nexus_colab_url', url);
+                    alert("Cloud GPU Connected Successfully! Selected External Cloud GPU mode.");
+                    document.getElementById('procmode-selected-text').innerText = "External Cloud GPU";
+                } else {
+                    localStorage.removeItem('nexus_colab_url');
+                    alert("Cloud GPU Disconnected. Reverting to Local Processing.");
+                    document.getElementById('procmode-selected-text').innerText = document.getElementById('live-gpu-name').innerText.includes('Off') ? 'CPU Precision (Slow)' : 'GPU Accelerated (Fast)';
+                }
+                document.getElementById('colab-modal').classList.add('hidden');
+            }
+            
+            // On load, populate colab input if exists
+            window.addEventListener('DOMContentLoaded', () => {
+                const savedUrl = localStorage.getItem('nexus_colab_url');
+                if(savedUrl && document.getElementById('colab-url-input')) {
+                    document.getElementById('colab-url-input').value = savedUrl;
+                }
+            });
+        </script>
+        
+        <!-- Cloud GPU Modal -->
+        <div id="colab-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+                <div class="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white shadow-md">
+                            <i class="ph-fill ph-cloud-lightning text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-extrabold text-slate-800">Connect External Cloud GPU</h3>
+                            <p class="text-xs font-medium text-slate-500">Accelerate upscaling using free cloud services.</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('colab-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-500 transition">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6 overflow-y-auto pro-scrollbar flex-1 bg-white">
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <!-- Google Colab -->
+                        <a href="https://colab.research.google.com/" target="_blank" class="border border-slate-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition group block text-center">
+                            <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 mx-auto flex items-center justify-center mb-3 group-hover:bg-orange-500 group-hover:text-white transition">
+                                <i class="ph-fill ph-google-logo text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-800">Google Colab</h4>
+                            <p class="text-[10px] text-slate-500 mt-1">Free T4 GPU (~12GB)</p>
+                            <span class="mt-3 inline-block px-2 py-1 bg-slate-100 text-slate-500 text-[9px] font-bold uppercase rounded group-hover:bg-orange-100 group-hover:text-orange-600 transition">Open Workspace <i class="ph-bold ph-arrow-up-right"></i></span>
+                        </a>
+                        
+                        <!-- Kaggle -->
+                        <a href="https://www.kaggle.com/" target="_blank" class="border border-slate-200 rounded-xl p-4 hover:border-blue-400 hover:shadow-md transition group block text-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 mx-auto flex items-center justify-center mb-3 group-hover:bg-blue-500 group-hover:text-white transition">
+                                <i class="ph-bold ph-brackets-angle text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-800">Kaggle</h4>
+                            <p class="text-[10px] text-slate-500 mt-1">Free P100/T4 (30h/wk)</p>
+                            <span class="mt-3 inline-block px-2 py-1 bg-slate-100 text-slate-500 text-[9px] font-bold uppercase rounded group-hover:bg-blue-100 group-hover:text-blue-600 transition">Open Workspace <i class="ph-bold ph-arrow-up-right"></i></span>
+                        </a>
+                        
+                        <!-- Lightning AI -->
+                        <a href="https://lightning.ai/" target="_blank" class="border border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-md transition group block text-center">
+                            <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-500 mx-auto flex items-center justify-center mb-3 group-hover:bg-purple-500 group-hover:text-white transition">
+                                <i class="ph-fill ph-lightning text-2xl"></i>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-800">Lightning AI</h4>
+                            <p class="text-[10px] text-slate-500 mt-1">Free T4 (15h/mo)</p>
+                            <span class="mt-3 inline-block px-2 py-1 bg-slate-100 text-slate-500 text-[9px] font-bold uppercase rounded group-hover:bg-purple-100 group-hover:text-purple-600 transition">Open Workspace <i class="ph-bold ph-arrow-up-right"></i></span>
+                        </a>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-6">
+                        <h4 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="ph-bold ph-info"></i> How to use External GPU</h4>
+                        <ol class="text-xs text-blue-700 space-y-2 list-decimal list-inside font-medium">
+                            <li>Open one of the free services above and create a new notebook.</li>
+                            <li>Upload the <code class="bg-white px-1 py-0.5 rounded border border-blue-200">app.py</code> and <code class="bg-white px-1 py-0.5 rounded border border-blue-200">logic_ai_upscaler.py</code> to the notebook.</li>
+                            <li>Install requirements: <code class="bg-white px-1 py-0.5 rounded border border-blue-200">!pip install flask flask-cors opencv-python torch torchvision</code></li>
+                            <li>Run the app with LocalTunnel or Ngrok to get a public URL.</li>
+                            <li>Paste that public URL below and click "Save & Connect".</li>
+                            <li>In the main UI, set <strong>Processing Mode</strong> to <span class="bg-white px-1 py-0.5 rounded border border-blue-200 text-blue-800">External Cloud GPU</span>.</li>
+                        </ol>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-2">Cloud GPU Public URL</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="ph-bold ph-link text-slate-400"></i>
+                            </div>
+                            <input type="text" id="colab-url-input" placeholder="e.g., https://xxxx-xx.loca.lt" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3 shrink-0">
+                    <button onclick="document.getElementById('colab-url-input').value=''; saveColabUrl();" class="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition shadow-sm">Disconnect</button>
+                    <button onclick="saveColabUrl()" class="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-plug"></i> Save & Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
