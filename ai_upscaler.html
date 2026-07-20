@@ -1137,6 +1137,8 @@
                     document.getElementById(`batch-log-${idx}`).innerText = "Error: Network Timeout / Tunnel Dead";
                     document.getElementById(`batch-log-${idx}`).classList.replace('text-slate-400', 'text-red-500');
                 }
+            }
+
             async function downloadAllBatch() {
                 const dlBtn = document.getElementById('batch-download-btn');
                 const origHtml = dlBtn.innerHTML;
