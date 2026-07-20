@@ -78,24 +78,36 @@ def process_upscale():
                 response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
                 
                 if response.status_code == 200:
-                    progress_tracker[task_id] = {"percent": 90, "log": "Receiving upscaled output from Cloud..."}
-                    import time
-                    orig_name = os.path.splitext(file.filename)[0]
-                    master_file = f"{orig_name}_ColabGPU_{int(time.time())}.jpg"
-                    master_path = os.path.join('static/outputs', master_file)
-                    
-                    with open(master_path, 'wb') as out_f:
-                        out_f.write(response.content)
+                    colab_json = response.json()
+                    if colab_json.get('status') == 'success':
+                        progress_tracker[task_id] = {"percent": 90, "log": "Downloading upscaled output from Cloud..."}
                         
-                    progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
-                    output_url = "/" + master_path.replace("\\", "/")
-                    return jsonify({
-                        "status": "success", 
-                        "processed_path": output_url,
-                        "output_path": output_url,
-                        "master_file": output_url,
-                        "filename": master_file
-                    })
+                        remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
+                        image_url = colab_url.rstrip('/') + remote_image_path
+                        
+                        img_response = requests.get(image_url, headers=headers)
+                        if img_response.status_code == 200:
+                            import time
+                            orig_name = os.path.splitext(file.filename)[0]
+                            master_file = f"{orig_name}_ColabGPU_{int(time.time())}.jpg"
+                            master_path = os.path.join('static/outputs', master_file)
+                            
+                            with open(master_path, 'wb') as out_f:
+                                out_f.write(img_response.content)
+                                
+                            progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
+                            output_url_local = "/" + master_path.replace("\\", "/")
+                            return jsonify({
+                                "status": "success", 
+                                "processed_path": output_url_local,
+                                "output_path": output_url_local,
+                                "master_file": output_url_local,
+                                "filename": master_file
+                            })
+                        else:
+                            raise Exception("Failed to download image from Colab.")
+                    else:
+                        raise Exception(colab_json.get('message', 'Unknown Cloud Error'))
                 else:
                     error_msg = f"API returned {response.status_code}: {response.text[:150]}"
                     raise Exception(error_msg)
