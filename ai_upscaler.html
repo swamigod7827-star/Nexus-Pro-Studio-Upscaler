@@ -1408,6 +1408,17 @@
                 const savedUrl = localStorage.getItem('nexus_colab_url');
                 if(savedUrl && document.getElementById('colab-url-input')) {
                     document.getElementById('colab-url-input').value = savedUrl;
+                    
+                    // Auto-activate Cloud GPU mode if saved
+                    const textSpan = document.getElementById('procmode-selected-text');
+                    if (textSpan) {
+                        try {
+                            const domain = new URL(savedUrl).hostname;
+                            textSpan.innerHTML = `<i class="ph-fill ph-cloud text-blue-500 mr-1"></i> Cloud: ${domain}`;
+                        } catch(e) {
+                            textSpan.innerHTML = 'External Cloud GPU';
+                        }
+                    }
                 }
             });
         </script>
