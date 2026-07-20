@@ -31,6 +31,18 @@ def get_progress():
         return jsonify(progress_tracker[task_id])
     return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
 
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+
+# Add proxy route below index()
+@app.route('/proxy-cloud-image')
+def proxy_cloud_image():
+    url = request.args.get('url')
+    if not url:
+        return "Missing URL", 400
+    headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+    req = requests.get(url, headers=headers, stream=True)
+    return Response(stream_with_context(req.iter_content(chunk_size=1024*1024)), content_type=req.headers.get('content-type', 'image/jpeg'))
+
 @app.route('/api/process-upscale', methods=['POST'])
 def process_upscale():
     try:
@@ -41,14 +53,57 @@ def process_upscale():
         if file.filename == '':
             return jsonify({'status': 'error', 'message': 'No selected file.'})
 
+        task_id = request.form.get('task_id', 'default_task')
+        colab_url = request.form.get('colab_url', None)
+
+        if colab_url:
+            # PURE CLOUD MODE: Do NOT save to local disk
+            progress_tracker[task_id] = {"percent": 5, "log": "Connecting to Cloud GPU Proxy..."}
+            try:
+                # Read directly from memory
+                file_bytes = file.read()
+                files = {'image': (file.filename, file_bytes, file.content_type)}
+                
+                colab_endpoint = colab_url.rstrip('/') + '/api/process-upscale'
+                progress_tracker[task_id] = {"percent": 20, "log": "Uploading raw image directly to Cloud GPU..."}
+                
+                form_data = request.form.to_dict()
+                if 'colab_url' in form_data:
+                    del form_data['colab_url']
+                
+                headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+                response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
+                
+                if response.status_code == 200:
+                    colab_json = response.json()
+                    if colab_json.get('status') == 'success':
+                        # Done immediately! No downloading bytes to local disk!
+                        progress_tracker[task_id] = {"percent": 100, "log": "Masterpiece Created Successfully on Cloud!"}
+                        
+                        remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
+                        image_url = colab_url.rstrip('/') + remote_image_path
+                        proxy_url = f"/proxy-cloud-image?url={requests.utils.quote(image_url)}"
+                        
+                        return jsonify({
+                            "status": "success", 
+                            "processed_path": proxy_url,
+                            "output_path": proxy_url,
+                            "master_file": proxy_url,
+                            "filename": colab_json.get('filename', f'Cloud_{file.filename}')
+                        })
+                    else:
+                        raise Exception(colab_json.get('message', 'Unknown Cloud Error'))
+                else:
+                    error_msg = f"API returned {response.status_code}: {response.text[:150]}"
+                    raise Exception(error_msg)
+            except Exception as e:
+                progress_tracker[task_id] = {"percent": 0, "log": f"Cloud Error: {str(e)}"}
+                return jsonify({'status': 'error', 'message': f"Cloud GPU Error: {str(e)}"})
+        
+        # LOCAL MODE
+        progress_tracker[task_id] = {"percent": 5, "log": "Image Uploaded. Waking up Local AI Orchestrator..."}
         input_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(input_path)
-
-        # Catch the Task ID sent by UI
-        task_id = request.form.get('task_id', 'default_task')
-        
-        # Initialize progress at 5%
-        progress_tracker[task_id] = {"percent": 5, "log": "Image Uploaded. Waking up AI Orchestrator..."}
 
         payload = {
             'input_image_path': input_path,
@@ -61,66 +116,6 @@ def process_upscale():
             'export': request.form.get('export', '{}')
         }
 
-        # 🚀 CLOUD GPU PROXY ROUTING
-        colab_url = request.form.get('colab_url', None)
-        if colab_url:
-            progress_tracker[task_id] = {"percent": 10, "log": "Connecting to Cloud GPU Proxy..."}
-            try:
-                with open(input_path, 'rb') as f:
-                    file_bytes = f.read()
-                    
-                files = {'image': (file.filename, file_bytes, file.mimetype)}
-                colab_endpoint = colab_url.rstrip('/') + '/api/process-upscale'
-                progress_tracker[task_id] = {"percent": 30, "log": "Uploading image to Cloud GPU..."}
-                
-                form_data = request.form.to_dict()
-                if 'colab_url' in form_data:
-                    del form_data['colab_url']
-                
-                # Add Bypass headers for localtunnel/cloudflare
-                headers = {
-                    'Bypass-Tunnel-Reminder': 'true',
-                    'User-Agent': 'curl/7.68.0'
-                }
-                response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
-                
-                if response.status_code == 200:
-                    colab_json = response.json()
-                    if colab_json.get('status') == 'success':
-                        progress_tracker[task_id] = {"percent": 90, "log": "Downloading upscaled output from Cloud..."}
-                        
-                        remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
-                        image_url = colab_url.rstrip('/') + remote_image_path
-                        
-                        img_response = requests.get(image_url, headers=headers)
-                        if img_response.status_code == 200:
-                            import time
-                            orig_name = os.path.splitext(file.filename)[0]
-                            master_file = f"{orig_name}_ColabGPU_{int(time.time())}.jpg"
-                            master_path = os.path.join('static/outputs', master_file)
-                            
-                            with open(master_path, 'wb') as out_f:
-                                out_f.write(img_response.content)
-                                
-                            progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
-                            output_url_local = "/" + master_path.replace("\\", "/")
-                            return jsonify({
-                                "status": "success", 
-                                "processed_path": output_url_local,
-                                "output_path": output_url_local,
-                                "master_file": output_url_local,
-                                "filename": master_file
-                            })
-                        else:
-                            raise Exception("Failed to download image from Colab.")
-                    else:
-                        raise Exception(colab_json.get('message', 'Unknown Cloud Error'))
-                else:
-                    error_msg = f"API returned {response.status_code}: {response.text[:150]}"
-                    raise Exception(error_msg)
-            except Exception as e:
-                progress_tracker[task_id] = {"percent": 0, "log": f"Cloud Error: {str(e)}"}
-                return jsonify({'status': 'error', 'message': f"Cloud GPU Error: {str(e)}"})
 
         # Send the tracker reference to the LOCAL Orchestrator
         result = logic_ai_upscaler.process_upscale_logic(payload, progress_tracker)
