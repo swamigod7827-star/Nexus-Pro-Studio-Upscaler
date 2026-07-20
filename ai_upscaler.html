@@ -767,23 +767,31 @@
                 const singleWrapper = document.getElementById('lightbox-single-wrapper');
                 
                 if (isLightboxZoomed) {
-                    upImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
-                    origImg.className = "absolute top-0 left-0 h-full w-auto max-w-none pointer-events-none";
-                    singleImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
-                    if(icon) icon.className = "ph-bold ph-magnifying-glass-minus text-xl";
-                    sliderWrapper.classList.remove('items-center', 'justify-center');
-                    sliderWrapper.classList.add('items-start', 'justify-start');
-                    singleWrapper.classList.remove('items-center', 'justify-center');
-                    singleWrapper.classList.add('items-start', 'justify-start');
+                    if (upImg) upImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
+                    if (origImg) origImg.className = "absolute top-0 left-0 h-full w-auto max-w-none pointer-events-none";
+                    if (singleImg) singleImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
+                    if (icon) icon.className = "ph-bold ph-magnifying-glass-minus text-xl";
+                    if (sliderWrapper) {
+                        sliderWrapper.classList.remove('items-center', 'justify-center');
+                        sliderWrapper.classList.add('items-start', 'justify-start');
+                    }
+                    if (singleWrapper) {
+                        singleWrapper.classList.remove('items-center', 'justify-center');
+                        singleWrapper.classList.add('items-start', 'justify-start');
+                    }
                 } else {
-                    upImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
-                    origImg.className = "absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none";
-                    singleImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
-                    if(icon) icon.className = "ph-bold ph-magnifying-glass-plus text-xl";
-                    sliderWrapper.classList.add('items-center', 'justify-center');
-                    sliderWrapper.classList.remove('items-start', 'justify-start');
-                    singleWrapper.classList.add('items-center', 'justify-center');
-                    singleWrapper.classList.remove('items-start', 'justify-start');
+                    if (upImg) upImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
+                    if (origImg) origImg.className = "absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none";
+                    if (singleImg) singleImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
+                    if (icon) icon.className = "ph-bold ph-magnifying-glass-plus text-xl";
+                    if (sliderWrapper) {
+                        sliderWrapper.classList.add('items-center', 'justify-center');
+                        sliderWrapper.classList.remove('items-start', 'justify-start');
+                    }
+                    if (singleWrapper) {
+                        singleWrapper.classList.add('items-center', 'justify-center');
+                        singleWrapper.classList.remove('items-start', 'justify-start');
+                    }
                 }
             }
 
