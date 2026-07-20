@@ -687,7 +687,10 @@
             
                 const factor = document.getElementById('upscale-selected-text').innerText;
                 const model = document.getElementById('aimodel-selected-text').innerText;
-                const mode = document.getElementById('procmode-selected-text').innerText;
+                let mode = document.getElementById('procmode-selected-text').innerText;
+                if (mode.includes('Cloud')) {
+                    mode = 'External Cloud GPU';
+                }
             
                 const strength = document.getElementById('slider-strength').value;
                 const noise = document.getElementById('slider-noise').value;
