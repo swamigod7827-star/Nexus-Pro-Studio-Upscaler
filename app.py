@@ -7,6 +7,10 @@ import logic_ai_upscaler
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'static/outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
