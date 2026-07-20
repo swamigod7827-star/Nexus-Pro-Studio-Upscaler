@@ -1,6 +1,8 @@
 import os
 import requests
 from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+
 from flask_cors import CORS
 import logic_ai_upscaler
 
@@ -30,8 +32,6 @@ def get_progress():
     if task_id and task_id in progress_tracker:
         return jsonify(progress_tracker[task_id])
     return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
-
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 
 # Add proxy route below index()
 @app.route('/proxy-cloud-image')

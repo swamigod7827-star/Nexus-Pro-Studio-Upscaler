@@ -92,6 +92,9 @@
                         <button id="export-tab-btn" class="setting-tab px-6 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition flex items-center gap-2" onclick="switchTab('export', this)">
                             <i class="ph-fill ph-export"></i> Output & Export
                         </button>
+                        <button class="setting-tab px-6 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition flex items-center gap-2" onclick="switchTab('batch', this)">
+                            <i class="ph-fill ph-files"></i> Batch Processing
+                        </button>
 
                     </div>
                 
@@ -277,7 +280,26 @@
                                 <i class="ph-bold ph-download-simple"></i> Export Image
                             </button>
                         </div>
-
+                        
+                        <!-- TAB 5: Batch Processing Instructions -->
+                        <div id="tab-batch" class="hidden flex-col gap-4 relative z-[60]">
+                            <h3 class="text-lg font-bold text-slate-800">Batch Processing Mode</h3>
+                            <p class="text-sm text-slate-500">Drag and drop multiple images below to process them sequentially using your current settings.</p>
+                            <div class="flex gap-4 items-center mt-2">
+                                <button id="batch-start-btn" onclick="startBatchProcessing()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center gap-2 hidden">
+                                    <i class="ph-bold ph-lightning"></i> Run Batch Upscaler
+                                </button>
+                                <button id="batch-add-more-btn" onclick="document.getElementById('batch-file-input').click()" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2 hidden">
+                                    <i class="ph-bold ph-plus"></i> Add More
+                                </button>
+                                <button id="batch-download-btn" onclick="downloadAllBatch()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/30 transition flex items-center gap-2 hidden">
+                                    <i class="ph-bold ph-download-simple"></i> Download All Completed
+                                </button>
+                                <button onclick="resetBatch()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                                    <i class="ph-bold ph-trash"></i> Clear Queue
+                                </button>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
@@ -324,7 +346,7 @@
                             </div>
                             <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Drag & Drop to Workspace</h2>
                             <p class="text-slate-500 font-medium text-sm mb-6">Supports PNG, JPG, RAW, WEBP up to 50MB</p>
-                            <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleUpload(this.files[0])">
+                            <input type="file" id="file-input" class="hidden" accept="image/*" multiple onchange="handleUpload(this.files)">
                             <button class="px-8 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 shadow-sm transition">
                                 Browse Computer
                             </button>
@@ -348,6 +370,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     <div id="bottom-action-bar" class="hidden border-t border-slate-100 bg-white items-center justify-between p-4 shrink-0 rounded-b-2xl z-20 relative">
@@ -363,7 +386,47 @@
                     </div>
                 
                 </div>
+                
+                <!-- ==========================================
+                     4. BATCH CANVAS AREA
+                     ========================================== -->
+                <div class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm flex-col relative overflow-hidden h-[650px]" id="batch-canvas-card">
+                    <div class="border-b border-slate-100 bg-white flex items-center p-4 shrink-0 rounded-t-2xl z-20">
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-2"><i class="ph-bold ph-files text-slate-400"></i> Batch Queue</span>
+                        <span class="ml-auto text-xs font-bold text-slate-500" id="batch-status-text">0 files loaded</span>
+                    </div>
+                    
+                    <div class="w-full bg-slate-100 h-1 overflow-hidden">
+                        <div id="batch-progress-fill" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
+                    </div>
+
+                    <div class="flex-1 overflow-hidden relative">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center py-20 cursor-pointer transition-all canvas-bg hover:opacity-90" id="batch-upload-state" onclick="document.getElementById('batch-file-input').click()">
+                            <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-200 transition-transform hover:scale-110">
+                                <i class="ph-bold ph-files text-3xl"></i>
+                            </div>
+                            <h2 class="text-xl font-extrabold text-slate-800 mb-2">Drop Multiple Images Here</h2>
+                            <p class="text-slate-500 font-medium text-xs mb-4">Supports bulk PNG, JPG, RAW, WEBP</p>
+                            <input type="file" id="batch-file-input" class="hidden" accept="image/*" multiple onchange="handleBatchUpload(this.files)">
+                        </div>
+                        
+                        <div id="batch-file-list" class="hidden absolute inset-0 overflow-y-auto pro-scrollbar p-6 grid grid-cols-3 gap-6 content-start canvas-bg">
+                            <!-- Batch items injected here -->
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <!-- ==========================================
+             LIGHTBOX MODAL FOR BATCH PREVIEW
+             ========================================== -->
+        <div id="lightbox-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-slate-900/95 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox()">
+            <button class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition shadow-lg" onclick="closeLightbox()">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+            <div class="absolute top-6 left-6 text-white bg-black/50 px-4 py-2 rounded-lg font-bold text-sm shadow-lg backdrop-blur-md" id="lightbox-title">Preview</div>
+            <img id="lightbox-img" src="" class="max-w-[95vw] max-h-[90vh] object-contain drop-shadow-2xl rounded-lg" onclick="event.stopPropagation()">
         </div>
 
         <!-- ==========================================
@@ -397,6 +460,8 @@
                 <div class="flex gap-3 mt-6 hidden" id="modal-success-btn-group">
                     <button onclick="closeProgressModal()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3 rounded-xl transition shadow-sm flex justify-center items-center gap-2">
                         <i class="ph-bold ph-eye text-lg"></i> View on Canvas
+                    <button onclick="resetApp()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 border border-slate-200">
+                        <i class="ph-bold ph-arrow-counter-clockwise text-lg"></i> Process Another
                     </button>
                     <button onclick="goToExportTab()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
                         <i class="ph-bold ph-sliders-horizontal text-lg"></i> Download Output
@@ -469,19 +534,33 @@
                 btn.classList.add('active', 'text-blue-600', 'border-blue-600');
                 btn.classList.remove('text-slate-500', 'border-transparent');
             
-                const allTabs = ['tab-primary', 'tab-advanced', 'tab-face', 'tab-export', 'tab-server'];
+                const allTabs = ['tab-primary', 'tab-advanced', 'tab-face', 'tab-export', 'tab-server', 'tab-batch'];
                 allTabs.forEach(t => {
                     const el = document.getElementById(t);
                     if(el) {
                         el.classList.add('hidden');
-                        el.classList.remove('grid');
+                        if (t === 'tab-batch') el.classList.remove('flex');
+                        else el.classList.remove('grid');
                     }
                 });
             
                 const target = document.getElementById('tab-' + tabName);
                 if(target) {
                     target.classList.remove('hidden');
-                    target.classList.add('grid');
+                    if (tabName === 'batch') target.classList.add('flex');
+                    else target.classList.add('grid');
+                }
+                
+                // Toggle canvases
+                const mainCanvas = document.getElementById('canvas-card');
+                const batchCanvas = document.getElementById('batch-canvas-card');
+                
+                if (tabName === 'batch') {
+                    if(mainCanvas) { mainCanvas.classList.add('hidden'); mainCanvas.classList.remove('flex'); }
+                    if(batchCanvas) { batchCanvas.classList.remove('hidden'); batchCanvas.classList.add('flex'); }
+                } else {
+                    if(mainCanvas) { mainCanvas.classList.remove('hidden'); mainCanvas.classList.add('flex'); }
+                    if(batchCanvas) { batchCanvas.classList.add('hidden'); batchCanvas.classList.remove('flex'); }
                 }
             }
         
@@ -492,6 +571,46 @@
                 if (exportTabBtn) {
                     switchTab('export', exportTabBtn);
                 }
+            }
+            
+            function resetApp() {
+                closeProgressModal();
+                document.getElementById('preview-state').classList.add('hidden');
+                document.getElementById('preview-state').classList.remove('flex');
+                document.getElementById('bottom-action-bar').classList.add('hidden');
+                document.getElementById('bottom-action-bar').classList.remove('flex');
+                
+                document.getElementById('upload-state').classList.remove('hidden');
+                document.getElementById('upload-state').classList.add('flex');
+                
+                document.getElementById('file-input').value = "";
+                window.currentSingleFile = null;
+                currentProcessedImageUrl = null;
+                currentMasterImageUrl = null;
+            }
+            
+            function resetBatch() {
+                batchFiles = [];
+                batchResults = [];
+                document.getElementById('batch-upload-state').classList.remove('hidden');
+                document.getElementById('batch-file-list').classList.add('hidden');
+                document.getElementById('batch-file-list').innerHTML = '';
+                document.getElementById('batch-file-input').value = "";
+                
+                const btn = document.getElementById('batch-start-btn');
+                if(btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph-bold ph-lightning"></i> Run Batch Upscaler';
+                    btn.classList.add('hidden');
+                }
+                const dlBtn = document.getElementById('batch-download-btn');
+                if(dlBtn) dlBtn.classList.add('hidden');
+                
+                const addMoreBtn = document.getElementById('batch-add-more-btn');
+                if(addMoreBtn) addMoreBtn.classList.add('hidden');
+                
+                document.getElementById('batch-status-text').innerText = "0 files loaded";
+                document.getElementById('batch-progress-fill').style.width = '0%';
             }
         
             let currentZoom = 100;
@@ -539,44 +658,137 @@
             const origImg = document.getElementById('original-img');
             const upImg = document.getElementById('upscaled-img');
 
-            function handleUpload(file) {
-                if(file) {
-                    const url = URL.createObjectURL(file);
-                
-                    origImg.src = url;
-                    upImg.src = url; 
-                
-                    // Image load hone par wrapper ko reset karein
-                    const img = new Image();
-                    img.onload = function() {
-                        document.getElementById('res-in').innerText = this.width + "x" + this.height;
-                        // Canvas container ko reset karein taaki stretch na ho
-                        document.getElementById('image-wrapper').style.width = '100%';
-                    };
-                    img.src = url;
-                
-                    document.getElementById('file-name-display').innerText = file.name;
-                    document.getElementById('bottom-file-name').innerText = file.name;
+            let batchFiles = [];
+            let batchResults = [];
+            let batchCurrentIndex = 0;
 
-                    uploadState.classList.add('hidden');
-                    uploadState.classList.remove('flex');
-                    previewState.classList.remove('hidden');
-                    previewState.classList.add('flex');
-                    bottomBar.classList.remove('hidden');
-                    bottomBar.classList.add('flex');
+            function handleUpload(files) {
+                if(!files || files.length === 0) return;
+                
+                const file = files[0]; // Always process the first file in single mode
+                const url = URL.createObjectURL(file);
+            
+                origImg.src = url;
+                upImg.src = url; 
+            
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('res-in').innerText = this.width + "x" + this.height;
+                    document.getElementById('image-wrapper').style.width = '100%';
+                };
+                img.src = url;
+            
+                document.getElementById('file-name-display').innerText = file.name;
+                document.getElementById('bottom-file-name').innerText = file.name;
 
-                    currentZoom = 100;
-                    updateZoomUI();
-                    setTimeout(syncSplit, 50);
-                }
+                uploadState.classList.add('hidden');
+                uploadState.classList.remove('flex');
+                previewState.classList.remove('hidden');
+                previewState.classList.add('flex');
+                bottomBar.classList.remove('hidden');
+                bottomBar.classList.add('flex');
+
+                currentZoom = 100;
+                updateZoomUI();
+                setTimeout(syncSplit, 50);
+                
+                window.currentSingleFile = file;
+            }
+            
+            function handleBatchUpload(files) {
+                if(!files || files.length === 0) return;
+                
+                const newFiles = Array.from(files);
+                batchFiles = batchFiles.concat(newFiles);
+                batchResults = batchResults.concat(new Array(newFiles.length).fill(null));
+                
+                document.getElementById('batch-upload-state').classList.add('hidden');
+                document.getElementById('batch-file-list').classList.remove('hidden');
+                document.getElementById('batch-start-btn').classList.remove('hidden');
+                document.getElementById('batch-add-more-btn').classList.remove('hidden');
+                
+                renderBatchUI();
             }
         
+            function renderBatchUI() {
+                const list = document.getElementById('batch-file-list');
+                list.innerHTML = '';
+                document.getElementById('batch-status-text').innerText = `${batchFiles.length} files ready to process`;
+                document.getElementById('batch-progress-fill').style.width = '0%';
+                
+                batchFiles.forEach((f, idx) => {
+                    const objUrl = URL.createObjectURL(f);
+                    const div = document.createElement('div');
+                    div.className = "bg-white border border-slate-200 rounded-2xl p-2.5 flex flex-col gap-2 relative shadow-sm hover:shadow-md transition-shadow group cursor-pointer";
+                    div.onclick = () => openLightbox(idx);
+                    div.innerHTML = `
+                        <div class="h-64 w-full bg-slate-100/50 rounded-xl overflow-hidden relative flex items-center justify-center border border-slate-100 group-hover:border-blue-300 transition-colors">
+                            <img src="${objUrl}" class="w-full h-full object-contain drop-shadow-sm transition-transform duration-500 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <div class="bg-blue-600/90 text-white w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all shadow-lg">
+                                    <i class="ph-bold ph-arrows-out text-lg"></i>
+                                </div>
+                            </div>
+                            <div id="batch-overlay-${idx}" class="absolute inset-0 bg-slate-900/40 hidden flex items-center justify-center backdrop-blur-[2px]">
+                                <i class="ph-bold ph-spinner animate-spin text-white text-3xl"></i>
+                            </div>
+                            <div id="batch-done-${idx}" class="absolute inset-0 bg-emerald-500/90 hidden flex items-center justify-center backdrop-blur-sm">
+                                <i class="ph-bold ph-check-circle text-white text-4xl shadow-sm rounded-full drop-shadow-md"></i>
+                            </div>
+                        </div>
+                        <div class="text-xs font-bold text-slate-700 truncate px-1">${f.name}</div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div id="batch-prog-${idx}" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            function openLightbox(idx) {
+                const modal = document.getElementById('lightbox-modal');
+                const img = document.getElementById('lightbox-img');
+                const title = document.getElementById('lightbox-title');
+                const file = batchFiles[idx];
+                const res = batchResults[idx];
+                
+                if (res && res.status === 'success' && res.processed_path) {
+                    img.src = res.processed_path;
+                    title.innerHTML = `<span class="text-emerald-400"><i class="ph-bold ph-check-circle"></i> Upscaled:</span> ${res.filename || file.name}`;
+                } else {
+                    img.src = URL.createObjectURL(file);
+                    title.innerHTML = `<span class="text-blue-400"><i class="ph-bold ph-image"></i> Original:</span> ${file.name}`;
+                }
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            }
+
+            function closeLightbox() {
+                const modal = document.getElementById('lightbox-modal');
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.border = '2px dashed #3b82f6'; });
             dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.border = 'none'; });
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 dropZone.style.border = 'none';
-                if(e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files[0]);
+                if(e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files);
+            });
+            
+            const batchCanvasDrop = document.getElementById('batch-canvas-card');
+            batchCanvasDrop.addEventListener('dragover', (e) => { e.preventDefault(); batchCanvasDrop.style.border = '2px dashed #3b82f6'; });
+            batchCanvasDrop.addEventListener('dragleave', (e) => { e.preventDefault(); batchCanvasDrop.style.border = '1px solid #e2e8f0'; });
+            batchCanvasDrop.addEventListener('drop', (e) => {
+                e.preventDefault();
+                batchCanvasDrop.style.border = '1px solid #e2e8f0';
+                if(e.dataTransfer.files.length > 0) handleBatchUpload(e.dataTransfer.files);
             });
         
             const slider = document.getElementById('compare-slider');
@@ -670,8 +882,131 @@
             const modalBox = document.getElementById('progress-modal-box');
             const terminal = document.getElementById('terminal-steps');
 
+            async function startBatchProcessing() {
+                const btn = document.getElementById('batch-start-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+                
+                for (let i = 0; i < batchFiles.length; i++) {
+                    await processSingleBatchImage(i);
+                    const totalProg = Math.round(((i + 1) / batchFiles.length) * 100);
+                    document.getElementById('batch-progress-fill').style.width = totalProg + '%';
+                    document.getElementById('batch-status-text').innerText = `Processed ${i + 1} of ${batchFiles.length}`;
+                }
+                
+                btn.classList.add('hidden');
+                document.getElementById('batch-download-btn').classList.remove('hidden');
+                document.getElementById('batch-status-text').innerText = "All Complete! Ready for export.";
+            }
+
+            async function processSingleBatchImage(idx) {
+                const file = batchFiles[idx];
+                const overlay = document.getElementById(`batch-overlay-${idx}`);
+                const doneOver = document.getElementById(`batch-done-${idx}`);
+                const progBar = document.getElementById(`batch-prog-${idx}`);
+                
+                overlay.classList.remove('hidden');
+                
+                const formData = new FormData();
+                formData.append('image', file);
+                const taskId = "batch_" + Math.random().toString(36).substring(2, 9);
+                formData.append('task_id', taskId);
+                
+                // Get current settings (using same for all batch items as planned)
+                formData.append('factor', document.getElementById('upscale-selected-text').innerText);
+                formData.append('model', document.getElementById('aimodel-selected-text').innerText);
+                
+                let mode = document.getElementById('procmode-selected-text').innerText;
+                if (mode.includes('Cloud')) mode = 'External Cloud GPU';
+                formData.append('mode', mode);
+                
+                const strength = document.getElementById('slider-strength').value;
+                const noise = document.getElementById('slider-noise').value;
+                const texture = document.getElementById('slider-texture').value;
+                const artifact = document.getElementById('slider-artifact').value;
+                formData.append('settings', JSON.stringify({ strength: strength, noise: noise, texture: texture, artifact: artifact }));
+            
+                const faceEnable = document.getElementById('check-face-restore').checked;
+                const faceIdentity = document.getElementById('slider-identity').value;
+                const faceSkin = document.getElementById('slider-skin').value;
+                formData.append('face', JSON.stringify({ enabled: faceEnable, identity: faceIdentity, skin_tone: faceSkin }));
+            
+                const exportFormat = document.getElementById('format-selected-text').innerText;
+                const exportColor = document.getElementById('color-selected-text').innerText;
+                const exportDPI = document.getElementById('dpi-selected-text').innerText;
+                formData.append('export', JSON.stringify({ format: exportFormat, color_space: exportColor, dpi: exportDPI }));
+                
+                let colabUrl = localStorage.getItem('nexus_colab_url');
+                if(colabUrl && colabUrl.trim() !== "") {
+                    formData.append('colab_url', colabUrl.trim());
+                }
+
+                const checkInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch(`/api/progress?task_id=${taskId}`);
+                        const data = await res.json();
+                        progBar.style.width = data.percent + '%';
+                    } catch(e) {}
+                }, 1000);
+                
+                try {
+                    const response = await fetch('/api/process-upscale', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    clearInterval(checkInterval);
+                    overlay.classList.add('hidden');
+                    
+                    if (result.status === 'success') {
+                        doneOver.classList.remove('hidden');
+                        progBar.style.width = '100%';
+                        progBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                        batchResults[idx] = result;
+                    } else {
+                        progBar.classList.replace('bg-blue-500', 'bg-red-500');
+                    }
+                } catch(e) {
+                    clearInterval(checkInterval);
+                    overlay.classList.add('hidden');
+                    progBar.classList.replace('bg-blue-500', 'bg-red-500');
+                }
+            }
+
+            async function downloadAllBatch() {
+                const dlBtn = document.getElementById('batch-download-btn');
+                const origHtml = dlBtn.innerHTML;
+                dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Downloading...';
+                dlBtn.disabled = true;
+                
+                for (let i = 0; i < batchResults.length; i++) {
+                    const res = batchResults[i];
+                    if(res && res.processed_path) {
+                        try {
+                            const link = document.createElement('a');
+                            link.href = window.location.origin + res.processed_path;
+                            link.download = res.filename || 'upscaled_image';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            // Delay 1 second to prevent browser blocking multiple downloads
+                            await new Promise(r => setTimeout(r, 1000));
+                        } catch(e) {
+                            console.error("Batch download error: ", e);
+                        }
+                    }
+                }
+                
+                dlBtn.innerHTML = origHtml;
+                dlBtn.disabled = false;
+            }
+
+
             async function processImage(event) {
-                event.preventDefault();
+                if (event) event.preventDefault();
+                
+                // Batch mode check removed to fix ReferenceError
                         
                 if (uploadState.classList.contains('flex') || !uploadState.classList.contains('hidden')) {
                     alert("Please drag and drop an image first.");
@@ -679,11 +1014,11 @@
                 }
             
                 const fileInput = document.getElementById('file-input');
-                if (fileInput.files.length === 0) {
-                    alert("No file selected.");
-                    return;
+                let file = window.currentSingleFile;
+                if (!file) {
+                    if (fileInput.files.length > 0) file = fileInput.files[0];
+                    else { alert("Please drop an image first."); return; }
                 }
-                const imageFile = fileInput.files[0];
             
                 const factor = document.getElementById('upscale-selected-text').innerText;
                 const model = document.getElementById('aimodel-selected-text').innerText;
@@ -709,7 +1044,7 @@
                 const taskId = "task_" + Math.random().toString(36).substr(2, 9);
             
                 const formData = new FormData();
-                formData.append('image', imageFile);
+                formData.append('image', file);
                 formData.append('task_id', taskId); // Task ID backend ko bhej rahe hain
                 formData.append('factor', factor);
                 formData.append('model', model);
