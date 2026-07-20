@@ -70,6 +70,9 @@ def process_upscale():
                 progress_tracker[task_id] = {"percent": 30, "log": "Uploading image to Cloud GPU..."}
                 
                 form_data = request.form.to_dict()
+                if 'colab_url' in form_data:
+                    del form_data['colab_url']
+                
                 # Add Bypass headers for localtunnel/cloudflare
                 headers = {
                     'Bypass-Tunnel-Reminder': 'true',
