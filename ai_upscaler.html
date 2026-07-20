@@ -421,7 +421,7 @@
         <!-- ==========================================
              LIGHTBOX MODAL FOR BATCH PREVIEW
              ========================================== -->
-        <div id="lightbox-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-slate-900/95 backdrop-blur-sm transition-opacity opacity-0 p-10" onclick="closeLightbox()">
+        <div id="lightbox-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-slate-950 transition-opacity opacity-0" onclick="closeLightbox()">
             <button class="absolute top-6 right-20 w-12 h-12 bg-white/10 hover:bg-blue-500 rounded-full flex items-center justify-center text-white transition shadow-lg z-[210] hidden" onclick="toggleLightboxZoom(event)" id="lightbox-zoom-btn">
                 <i class="ph-bold ph-magnifying-glass-plus text-xl" id="lightbox-zoom-icon"></i>
             </button>
@@ -430,15 +430,15 @@
             </button>
             <div class="absolute top-6 left-6 text-white bg-black/50 px-4 py-2 rounded-lg font-bold text-sm shadow-lg backdrop-blur-md z-[210]" id="lightbox-title">Preview</div>
             
-            <div class="relative shadow-2xl overflow-auto custom-scrollbar rounded-lg bg-black w-full h-full max-w-[95vw] max-h-[90vh] mx-auto hidden flex-col items-center justify-center" id="lightbox-slider-wrapper" onclick="event.stopPropagation()">
+            <div class="relative overflow-auto custom-scrollbar bg-black w-full h-full mx-auto hidden flex-col items-center justify-center" id="lightbox-slider-wrapper" onclick="event.stopPropagation()">
                 
                 <div id="lightbox-inner-content" class="relative flex-shrink-0 m-auto">
                     <!-- Upscaled (Bottom Layer) -->
-                    <img id="lightbox-upscaled-img" src="" class="max-w-full max-h-[90vh] object-contain pointer-events-none block transition-all duration-300">
+                    <img id="lightbox-upscaled-img" src="" class="max-w-full max-h-screen object-contain pointer-events-none block">
                     
                     <!-- Original (Top Layer, Clipped) -->
                     <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none">
-                        <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none transition-all duration-300">
+                        <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none">
                     </div>
 
                     <!-- Handle -->
@@ -457,9 +457,9 @@
             </div>
             
             <!-- Single Image View -->
-            <div id="lightbox-single-wrapper" class="relative overflow-auto custom-scrollbar w-full h-full max-w-[95vw] max-h-[90vh] hidden flex-col items-center justify-center bg-black rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+            <div id="lightbox-single-wrapper" class="relative overflow-auto custom-scrollbar w-full h-full hidden flex-col items-center justify-center bg-black" onclick="event.stopPropagation()">
                 <div id="lightbox-single-inner" class="relative flex-shrink-0 m-auto">
-                    <img id="lightbox-single-img" src="" class="max-w-full max-h-[90vh] object-contain drop-shadow-2xl pointer-events-none block transition-all duration-300">
+                    <img id="lightbox-single-img" src="" class="max-w-full max-h-screen object-contain drop-shadow-2xl pointer-events-none block">
                 </div>
             </div>
         </div>
@@ -790,18 +790,18 @@
                 const singleWrapper = document.getElementById('lightbox-single-wrapper');
                 
                 if (isLightboxZoomed) {
-                    upImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block transition-all duration-300";
-                    origImg.className = "absolute top-0 left-0 h-full w-auto max-w-none pointer-events-none transition-all duration-300";
-                    singleImg.className = "w-auto h-auto max-w-none max-h-none drop-shadow-2xl pointer-events-none block transition-all duration-300";
+                    upImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
+                    origImg.className = "absolute top-0 left-0 h-full w-auto max-w-none pointer-events-none";
+                    singleImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
                     if(icon) icon.className = "ph-bold ph-magnifying-glass-minus text-xl";
                     sliderWrapper.classList.remove('items-center', 'justify-center');
                     sliderWrapper.classList.add('items-start', 'justify-start');
                     singleWrapper.classList.remove('items-center', 'justify-center');
                     singleWrapper.classList.add('items-start', 'justify-start');
                 } else {
-                    upImg.className = "max-w-full max-h-[90vh] object-contain pointer-events-none block transition-all duration-300";
-                    origImg.className = "absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none transition-all duration-300";
-                    singleImg.className = "max-w-full max-h-[90vh] object-contain drop-shadow-2xl pointer-events-none block transition-all duration-300";
+                    upImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
+                    origImg.className = "absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none";
+                    singleImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
                     if(icon) icon.className = "ph-bold ph-magnifying-glass-plus text-xl";
                     sliderWrapper.classList.add('items-center', 'justify-center');
                     sliderWrapper.classList.remove('items-start', 'justify-start');
@@ -814,7 +814,7 @@
                 if(e) e.stopPropagation();
                 isLightboxZoomed = !isLightboxZoomed;
                 updateZoomClasses();
-                setTimeout(syncLightboxSplit, 350);
+                syncLightboxSplit();
             }
 
             function openLightbox(idx) {
