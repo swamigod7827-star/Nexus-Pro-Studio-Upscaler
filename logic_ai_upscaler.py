@@ -15,7 +15,7 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 def update_progress(tracker, task_id, percent, log_msg):
     if tracker is not None and task_id:
         tracker[task_id] = {"percent": percent, "log": log_msg}
-    print(f"[PROGRESS] {percent}%: {log_msg}")
+    print(f"[PROGRESS] {percent}%: {log_msg}", flush=True)
 
 _GLOBAL_ENGINES = {}
 
@@ -56,7 +56,7 @@ def get_cached_engines(model_name, target_scale, device, half_precision, face_re
         url = 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth'
 
     if not os.path.exists(model_path):
-        print(f"        -> [AI ENGINE] Forcefully downloading model weights for {model_name}...")
+        print(f"        -> [AI ENGINE] Forcefully downloading model weights for {model_name}...", flush=True)
         import urllib.request
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         urllib.request.urlretrieve(url, model_path)
