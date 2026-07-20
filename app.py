@@ -88,7 +88,14 @@ def process_upscale():
                         out_f.write(response.content)
                         
                     progress_tracker[task_id] = {"percent": 100, "log": "Process Complete!"}
-                    return jsonify({"status": "success", "image_url": "/" + master_path.replace("\\", "/"), "filename": master_file})
+                    output_url = "/" + master_path.replace("\\", "/")
+                    return jsonify({
+                        "status": "success", 
+                        "processed_path": output_url,
+                        "output_path": output_url,
+                        "master_file": output_url,
+                        "filename": master_file
+                    })
                 else:
                     error_msg = f"API returned {response.status_code}: {response.text[:150]}"
                     raise Exception(error_msg)
