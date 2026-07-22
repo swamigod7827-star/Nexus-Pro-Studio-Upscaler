@@ -1271,38 +1271,72 @@
             async function downloadAllBatch() {
                 const dlBtn = document.getElementById('batch-download-btn');
                 const origHtml = dlBtn.innerHTML;
-                dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
+                dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Preparing...';
                 dlBtn.disabled = true;
                 
                 try {
-                    const zip = new JSZip();
-                    let hasFiles = false;
-                    for (let i = 0; i < batchResults.length; i++) {
-                        const res = batchResults[i];
-                        if(res && res.output_path) {
-                            try {
-                                const response = await fetch(window.location.origin + res.output_path);
-                                const blob = await response.blob();
-                                zip.file(res.filename || `upscaled_${i}.png`, blob);
-                                hasFiles = true;
-                            } catch(e) {
-                                console.error("Error fetching file for zip:", e);
+                    const exportFormat = document.querySelector('input[name="format"]:checked')?.value || 'PNG';
+                    
+                    if (exportFormat === 'PDF') {
+                        dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Merging PDFs...';
+                        const filePaths = batchResults.map(r => r.output_path).filter(Boolean);
+                        
+                        const colabUrl = document.getElementById('colab-url').value;
+                        const useColab = document.getElementById('use-colab').checked;
+                        
+                        const payload = { files: filePaths };
+                        if (useColab && colabUrl) {
+                            payload.colab_url = colabUrl;
+                        }
+
+                        const mergeRes = await fetch('/api/merge-pdfs', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const mergeData = await mergeRes.json();
+                        if (mergeData.status === 'success') {
+                            const link = document.createElement('a');
+                            link.href = mergeData.merged_url;
+                            link.download = "Nexus_Batch_Upscaled.pdf";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } else {
+                            alert("Failed to merge PDFs: " + mergeData.message);
+                        }
+                    } else {
+                        dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
+                        const zip = new JSZip();
+                        let hasFiles = false;
+                        for (let i = 0; i < batchResults.length; i++) {
+                            const res = batchResults[i];
+                            if(res && res.output_path) {
+                                try {
+                                    const response = await fetch(window.location.origin + res.output_path);
+                                    const blob = await response.blob();
+                                    zip.file(res.filename || `upscaled_${i}.${exportFormat.toLowerCase()}`, blob);
+                                    hasFiles = true;
+                                } catch(e) {
+                                    console.error("Error fetching file for zip:", e);
+                                }
                             }
                         }
-                    }
-                    if (hasFiles) {
-                        dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
-                        const content = await zip.generateAsync({type:"blob"});
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(content);
-                        link.download = "Nexus_Batch_Upscaled.zip";
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(link.href);
+                        if (hasFiles) {
+                            dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
+                            const content = await zip.generateAsync({type:"blob"});
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(content);
+                            link.download = "Nexus_Batch_Upscaled.zip";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(link.href);
+                        }
                     }
                 } catch(err) {
-                    console.error("Zip generation error:", err);
+                    console.error("Download error:", err);
                 }
                 
                 dlBtn.innerHTML = origHtml;

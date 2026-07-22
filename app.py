@@ -190,6 +190,68 @@ def get_result():
         return jsonify(res)
     return jsonify({"status": "processing"})
 
+@app.route('/api/merge-pdfs', methods=['POST'])
+def merge_pdfs():
+    try:
+        data = request.json
+        colab_url = data.get('colab_url')
+        file_urls = data.get('files', [])
+        
+        if not file_urls:
+            return jsonify({"status": "error", "message": "No files provided."})
+
+        # Proxy to Cloud GPU if active
+        if colab_url:
+            headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+            # Send just the raw paths to cloud
+            cloud_payload = {"files": file_urls}
+            res = requests.post(f"{colab_url.rstrip('/')}/api/merge-pdfs", json=cloud_payload, headers=headers)
+            cloud_json = res.json()
+            if cloud_json.get('status') == 'success':
+                merged_url = colab_url.rstrip('/') + cloud_json.get('merged_url')
+                proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(merged_url)}"
+                return jsonify({"status": "success", "merged_url": proxy_url})
+            return jsonify(cloud_json)
+
+        # Local Processing
+        from PIL import Image
+        merged_pdf_path = os.path.join(OUTPUT_FOLDER, f"Merged_Batch_{uuid.uuid4().hex[:8]}.pdf")
+        
+        images = []
+        for url in file_urls:
+            filename = url.split('/')[-1].split('?')[0]
+            local_filepath = os.path.join(OUTPUT_FOLDER, filename)
+            
+            if os.path.exists(local_filepath):
+                try:
+                    img = Image.open(local_filepath)
+                    if img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    images.append(img)
+                except Exception as e:
+                    print(f"Error opening image {local_filepath} for PDF merge: {e}")
+
+        if not images:
+            return jsonify({"status": "error", "message": "Could not read any valid images to merge."})
+
+        first_image = images[0]
+        other_images = images[1:]
+        
+        first_image.save(
+            merged_pdf_path,
+            "PDF",
+            resolution=100.0,
+            save_all=True,
+            append_images=other_images
+        )
+        
+        return jsonify({"status": "success", "merged_url": f"/{merged_pdf_path}"})
+
+    except Exception as e:
+        import traceback
+        print(f"Merge PDF Error: {e}\n{traceback.format_exc()}")
+        return jsonify({"status": "error", "message": str(e)})
+
 
 
 if __name__ == '__main__':

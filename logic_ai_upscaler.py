@@ -181,13 +181,27 @@ class NexusGenerativeEngine:
         if img is None: 
             raise ValueError("Image corrupted or missing.")
 
-        # Deep Analysis: Prevent Server OOM Crash on insane scales (e.g. 64X on large images)
-        h_in, w_in = img.shape[:2]
-        max_out_dim = 16384 # 16K Max Resolution (safe for 16GB RAM)
-        if h_in * self.target_scale > max_out_dim or w_in * self.target_scale > max_out_dim:
-            safe_scale = max_out_dim / max(h_in, w_in)
-            self.target_scale = float(safe_scale)
-            update_progress(tracker, task_id, 15, f"Optimized scale to {safe_scale:.1f}X to prevent server memory crash (16K Limit).")
+        # Deep Analysis: True 64K Processing via Disk-Streaming (Memmap)
+        # Bypasses 12GB RAM limit of Colab/Local by writing huge arrays to SSD.
+        import uuid
+        import tempfile
+        orig_zeros = np.zeros
+        
+        def memmap_zeros(shape, dtype=float, order='C', *, like=None):
+            if isinstance(shape, (tuple, list)) and len(shape) == 3:
+                try:
+                    bytes_req = np.prod(shape) * np.dtype(dtype).itemsize
+                    # If requested array > 1GB, swap to disk!
+                    if bytes_req > 1024 * 1024 * 1024:
+                        temp_file = os.path.join(tempfile.gettempdir(), f"memmap_{uuid.uuid4().hex}.dat")
+                        print(f"🔥 SWAPPING TO DISK: {bytes_req / (1024**3):.2f} GB Array -> {temp_file}")
+                        return np.memmap(temp_file, dtype=dtype, mode='w+', shape=tuple(shape))
+                except Exception:
+                    pass
+            # For `like=like` kwargs passing compatibility in newer numpy
+            if like is not None:
+                return orig_zeros(shape, dtype=dtype, order=order, like=like)
+            return orig_zeros(shape, dtype=dtype, order=order)
 
         if not os.path.exists(output_dir): 
             os.makedirs(output_dir)
@@ -199,16 +213,23 @@ class NexusGenerativeEngine:
             self.model_name, self.target_scale, self.device, self.half_precision, self.face_restore
         )
 
-        update_progress(tracker, task_id, 50, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+        # 2. Run Upscaler (with Memmap Patch)
+        np.zeros = memmap_zeros
+        try:
+            update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+            upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
+        finally:
+            np.zeros = orig_zeros # Restore immediately
+
+        # 3. Face Enhancement
         if self.face_restore and face_enhancer is not None:
             if "CodeFormer" in self.model_name:
                 self.face_weight = 0.95
                 
+            update_progress(tracker, task_id, 70, "Applying Generative Face Restoration...")
             _, _, upscaled = face_enhancer.enhance(
-                img, has_aligned=False, only_center_face=False, paste_back=True, weight=self.face_weight
+                upscaled, has_aligned=False, only_center_face=False, paste_back=True, weight=self.face_weight
             )
-        else:
-            upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
 
         h, w = upscaled.shape[:2]
 
