@@ -141,6 +141,18 @@ def get_progress():
         return jsonify(data)
     return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
 
+@app.route('/proxy-cloud-image')
+def proxy_cloud_image():
+    url = request.args.get('url')
+    if not url:
+        return "URL is missing", 400
+    try:
+        headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+        req = requests.get(url, headers=headers, stream=True, timeout=30)
+        return Response(stream_with_context(req.iter_content(chunk_size=8192)), content_type=req.headers.get('Content-Type', 'image/jpeg'))
+    except Exception as e:
+        return str(e), 500
+
 @app.route('/api/result', methods=['GET'])
 def get_result():
     task_id = request.args.get('task_id')
