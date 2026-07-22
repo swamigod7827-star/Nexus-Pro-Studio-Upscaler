@@ -1,8 +1,6 @@
 import os
 import requests
-from flask import Flask, request, jsonify, send_from_directory
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
-
 from flask_cors import CORS
 import logic_ai_upscaler
 
@@ -26,22 +24,11 @@ def index():
     return send_from_directory('.', 'ai_upscaler.html')
 
 # 🚀 NAYA: Real-Time API Endpoint for Progress Polling
-@app.route('/api/progress', methods=['GET'])
-def get_progress():
-    task_id = request.args.get('task_id')
-    if task_id and task_id in progress_tracker:
-        return jsonify(progress_tracker[task_id])
-    return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
+import threading
+import uuid
+import urllib.parse
 
-# Add proxy route below index()
-@app.route('/proxy-cloud-image')
-def proxy_cloud_image():
-    url = request.args.get('url')
-    if not url:
-        return "Missing URL", 400
-    headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
-    req = requests.get(url, headers=headers, stream=True)
-    return Response(stream_with_context(req.iter_content(chunk_size=1024*1024)), content_type=req.headers.get('content-type', 'image/jpeg'))
+task_results = {}
 
 @app.route('/api/process-upscale', methods=['POST'])
 def process_upscale():
@@ -53,37 +40,35 @@ def process_upscale():
         if file.filename == '':
             return jsonify({'status': 'error', 'message': 'No selected file.'})
 
-        task_id = request.form.get('task_id', 'default_task')
+        task_id = request.form.get('task_id', str(uuid.uuid4()))
         colab_url = request.form.get('colab_url', None)
 
         if colab_url:
-            # PURE CLOUD MODE: Do NOT save to local disk
-            progress_tracker[task_id] = {"percent": 5, "log": "Connecting to Cloud GPU Proxy..."}
+            # PURE CLOUD MODE: Proxy task to Colab async endpoint
+            progress_tracker[task_id] = {"percent": 5, "log": "Connecting to Cloud GPU Proxy...", "colab_url": colab_url}
             try:
                 # Read directly from memory
                 file_bytes = file.read()
                 files = {'image': (file.filename, file_bytes, file.content_type)}
                 
                 colab_endpoint = colab_url.rstrip('/') + '/api/process-upscale'
-                progress_tracker[task_id] = {"percent": 20, "log": "Uploading raw image directly to Cloud GPU..."}
                 
                 form_data = request.form.to_dict()
                 if 'colab_url' in form_data:
                     del form_data['colab_url']
                 
                 headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+                # Colab runs the same app.py, so it will return {"status": "processing"} instantly
                 response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
                 
                 if response.status_code == 200:
                     colab_json = response.json()
-                    if colab_json.get('status') == 'success':
-                        # Done immediately! No downloading bytes to local disk!
-                        progress_tracker[task_id] = {"percent": 100, "log": "Masterpiece Created Successfully on Cloud!"}
-                        
+                    if colab_json.get('status') == 'processing':
+                        return jsonify({"status": "processing", "task_id": task_id})
+                    elif colab_json.get('status') == 'success': # fallback if colab runs old app.py
                         remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
                         image_url = colab_url.rstrip('/') + remote_image_path
-                        proxy_url = f"/proxy-cloud-image?url={requests.utils.quote(image_url)}"
-                        
+                        proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(image_url)}"
                         return jsonify({
                             "status": "success", 
                             "processed_path": proxy_url,
@@ -100,9 +85,9 @@ def process_upscale():
                 progress_tracker[task_id] = {"percent": 0, "log": f"Cloud Error: {str(e)}"}
                 return jsonify({'status': 'error', 'message': f"Cloud GPU Error: {str(e)}"})
         
-        # LOCAL MODE
+        # LOCAL MODE (or running INSIDE Colab)
         progress_tracker[task_id] = {"percent": 5, "log": "Image Uploaded. Waking up Local AI Orchestrator..."}
-        input_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        input_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
         file.save(input_path)
 
         payload = {
@@ -116,20 +101,82 @@ def process_upscale():
             'export': request.form.get('export', '{}')
         }
 
+        # Run in background to prevent browser/tunnel timeout on long tasks
+        def run_task():
+            try:
+                import logic_ai_upscaler
+                result = logic_ai_upscaler.process_upscale_logic(payload, progress_tracker)
+                task_results[task_id] = result
+            except Exception as e:
+                import traceback
+                print(f"\n[CRITICAL ERROR in background] {e}\n{traceback.format_exc()}")
+                task_results[task_id] = {"status": "error", "message": str(e)}
+                progress_tracker[task_id] = {"percent": 100, "log": "Failed."}
 
-        # Send the tracker reference to the LOCAL Orchestrator
-        result = logic_ai_upscaler.process_upscale_logic(payload, progress_tracker)
+        threading.Thread(target=run_task).start()
         
-        # Clean up tracker memory once task is fully complete
-        if task_id in progress_tracker:
-            del progress_tracker[task_id]
-
-        return jsonify(result)
+        return jsonify({"status": "processing", "task_id": task_id})
 
     except Exception as e:
         import traceback
         print(f"\n[SERVER ERROR] {e}\n{traceback.format_exc()}")
         return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/progress', methods=['GET'])
+def get_progress():
+    task_id = request.args.get('task_id')
+    if task_id and task_id in progress_tracker:
+        data = progress_tracker[task_id]
+        colab_url = data.get('colab_url')
+        
+        # If proxying, ask Colab for progress
+        if colab_url:
+            try:
+                headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+                res = requests.get(f"{colab_url.rstrip('/')}/api/progress?task_id={task_id}", headers=headers, timeout=5)
+                return jsonify(res.json())
+            except Exception as e:
+                return jsonify({"percent": data.get('percent', 10), "log": "Waiting for Cloud GPU response..."})
+                
+        return jsonify(data)
+    return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
+
+@app.route('/api/result', methods=['GET'])
+def get_result():
+    task_id = request.args.get('task_id')
+    data = progress_tracker.get(task_id, {})
+    colab_url = data.get('colab_url')
+    
+    if colab_url:
+        try:
+            headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+            res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=10)
+            colab_json = res.json()
+            if colab_json.get('status') == 'success':
+                # Map remote URLs to proxy URLs
+                remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
+                image_url = colab_url.rstrip('/') + remote_image_path
+                proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(image_url)}"
+                
+                remote_master = colab_json.get('master_file')
+                master_url = colab_url.rstrip('/') + remote_master
+                proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
+                
+                return jsonify({
+                    "status": "success", 
+                    "processed_path": proxy_url,
+                    "output_path": proxy_url,
+                    "master_file": proxy_master,
+                    "filename": colab_json.get('filename')
+                })
+            return jsonify(colab_json)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Cloud Result Fetch Error: {str(e)}"})
+
+    res = task_results.get(task_id)
+    if res:
+        return jsonify(res)
+    return jsonify({"status": "processing"})
 
 
 

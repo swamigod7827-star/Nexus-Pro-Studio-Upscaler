@@ -162,6 +162,14 @@ class NexusGenerativeEngine:
         if img is None: 
             raise ValueError("Image corrupted or missing.")
 
+        # Deep Analysis: Prevent Server OOM Crash on insane scales (e.g. 64X on large images)
+        h_in, w_in = img.shape[:2]
+        max_out_dim = 16384 # 16K Max Resolution (safe for 16GB RAM)
+        if h_in * self.target_scale > max_out_dim or w_in * self.target_scale > max_out_dim:
+            safe_scale = max_out_dim / max(h_in, w_in)
+            self.target_scale = float(safe_scale)
+            update_progress(tracker, task_id, 15, f"Optimized scale to {safe_scale:.1f}X to prevent server memory crash (16K Limit).")
+
         if not os.path.exists(output_dir): 
             os.makedirs(output_dir)
 
@@ -194,31 +202,54 @@ class NexusGenerativeEngine:
         img_rgb = cv2.cvtColor(upscaled, cv2.COLOR_BGR2RGB)
         pil_master = Image.fromarray(img_rgb)
         
+        # Deep Analysis: Prevent Format conflicts with Color Space
         if "CMYK" in self.color_space.upper():
+            if self.pil_fmt in ['PNG', 'WEBP']:
+                update_progress(tracker, task_id, 96, "Notice: PNG/WEBP do not support CMYK. Exporting as TIFF instead.")
+                self.pil_fmt = 'TIFF'
+                self.ext = 'tiff'
             pil_master = pil_master.convert('CMYK')
+        elif "GRAYSCALE" in self.color_space.upper() or "B&W" in self.color_space.upper():
+            pil_master = pil_master.convert('L')
 
         import time
         orig_name = os.path.splitext(os.path.basename(input_path))[0]
         # Use original filename with prefix and unique timestamp to prevent browser cache problems
-        master_file = f"{orig_name}_Nexus_X{self.target_scale}_{int(time.time())}.{self.ext}"
+        master_file = f"{orig_name}_Nexus_X{int(self.target_scale)}_{int(time.time())}.{self.ext}"
         master_path = os.path.join(output_dir, master_file)
         
+        # Safe kwargs passing to prevent PIL exceptions
+        save_kwargs = {}
         if self.pil_fmt == 'JPEG':
-            pil_master.save(master_path, format=self.pil_fmt, quality=100, dpi=(self.dpi, self.dpi))
-        elif self.pil_fmt in ['PDF', 'EPS']:
-            pil_master.save(master_path, format=self.pil_fmt, resolution=self.dpi)
-        else:
-            pil_master.save(master_path, format=self.pil_fmt, dpi=(self.dpi, self.dpi))
+            save_kwargs = {'quality': 100, 'dpi': (self.dpi, self.dpi)}
+        elif self.pil_fmt == 'PDF':
+            save_kwargs = {'resolution': float(self.dpi)}
+        elif self.pil_fmt in ['PNG', 'TIFF', 'WEBP']:
+            save_kwargs = {'dpi': (self.dpi, self.dpi)}
+            
+        pil_master.save(master_path, format=self.pil_fmt, **save_kwargs)
+
+        update_progress(tracker, task_id, 99, "Generating Fast UI Preview...")
+        
+        preview_file = f"preview_{orig_name}_{int(time.time())}.jpg"
+        preview_path = os.path.join(output_dir, preview_file)
+        
+        preview_img = pil_master
+        if pil_master.mode != 'RGB':
+            preview_img = pil_master.convert('RGB')
+        
+        preview_img.save(preview_path, format='JPEG', quality=65, optimize=True)
 
         update_progress(tracker, task_id, 100, "Masterpiece Created Successfully!")
         
         # Ensure URLs have leading slash
         output_url = "/" + master_path.replace("\\", "/").lstrip("/")
+        preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
         
         return {
             "status": "success",
-            "processed_path": output_url, 
-            "output_path": output_url,
+            "processed_path": preview_url, 
+            "output_path": preview_url,
             "master_file": output_url,
             "resolution": f"{w}x{h}",
             "filename": master_file

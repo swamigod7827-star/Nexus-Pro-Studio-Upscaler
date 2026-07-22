@@ -783,6 +783,11 @@
             }
         
             function renderBatchUI() {
+                if (batchFiles.length === 0) {
+                    resetBatch();
+                    return;
+                }
+                
                 const list = document.getElementById('batch-file-list');
                 list.innerHTML = '';
                 document.getElementById('batch-status-text').innerText = `${batchFiles.length} files ready to process`;
@@ -795,6 +800,16 @@
                     
                     const card = clone.firstElementChild;
                     card.onclick = () => openLightbox(idx);
+                    
+                    const delBtn = clone.querySelector('.batch-delete-btn');
+                    if (delBtn) {
+                        delBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            batchFiles.splice(idx, 1);
+                            batchResults.splice(idx, 1);
+                            renderBatchUI();
+                        };
+                    }
                     
                     clone.querySelector('.batch-img').src = objUrl;
                     clone.querySelector('.batch-name').innerText = f.name;
@@ -1130,8 +1145,26 @@
                 }
                 
                 btn.classList.add('hidden');
-                document.getElementById('batch-download-btn').classList.remove('hidden');
-                document.getElementById('batch-status-text').innerText = "All Complete! Ready for export.";
+                
+                const hasSuccess = batchResults.some(r => r && r.status === 'success');
+                const allSuccess = batchResults.every(r => r && r.status === 'success');
+                
+                const statusText = document.getElementById('batch-status-text');
+                statusText.classList.remove('text-slate-500', 'text-green-500', 'text-orange-500', 'text-red-500');
+                
+                if (hasSuccess) {
+                    document.getElementById('batch-download-btn').classList.remove('hidden');
+                    if (allSuccess) {
+                        statusText.innerText = "All Complete! Ready for export.";
+                        statusText.classList.add('text-green-500');
+                    } else {
+                        statusText.innerText = "Completed with some errors. Ready for export.";
+                        statusText.classList.add('text-orange-500');
+                    }
+                } else {
+                    statusText.innerText = "All Failed. Check errors.";
+                    statusText.classList.add('text-red-500');
+                }
             }
 
             async function processSingleBatchImage(idx) {
@@ -1189,7 +1222,19 @@
                         method: 'POST',
                         body: formData
                     });
-                    const result = await response.json();
+                    let result = await response.json();
+                    
+                    if (result.status === 'processing') {
+                        while (true) {
+                            const res = await fetch(`/api/result?task_id=${taskId}`);
+                            const temp = await res.json();
+                            if (temp && temp.status !== 'processing') {
+                                result = temp;
+                                break;
+                            }
+                            await new Promise(r => setTimeout(r, 2000));
+                        }
+                    }
                     
                     clearInterval(checkInterval);
                     overlay.classList.add('hidden');
@@ -1383,13 +1428,23 @@
             
                 // 🚀 SENDING THE ACTUAL POST REQUEST
                 try {
-                    const fetchPromise = fetch('/api/process-upscale', {
+                    const response = await fetch('/api/process-upscale', {
                         method: 'POST',
                         body: formData
                     });
-                
-                    const response = await fetchPromise;
-                    const data = await response.json();
+                    let data = await response.json();
+                    
+                    if (data.status === 'processing') {
+                        while (true) {
+                            const res = await fetch(`/api/result?task_id=${taskId}`);
+                            const temp = await res.json();
+                            if (temp && temp.status !== 'processing') {
+                                data = temp;
+                                break;
+                            }
+                            await new Promise(r => setTimeout(r, 2000));
+                        }
+                    }
                     
                     // Processing done, stop asking for status
                     isProcessing = false;
@@ -1658,6 +1713,9 @@
     <!-- Template for Batch Queue Items -->
     <template id="batch-card-template">
         <div class="bg-white border border-slate-200 rounded-2xl p-2.5 flex flex-col gap-2 relative shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <button class="batch-delete-btn absolute top-4 right-4 z-30 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100" title="Remove Image">
+                <i class="ph-bold ph-trash text-sm pointer-events-none"></i>
+            </button>
             <div class="h-80 w-full bg-slate-100/50 rounded-xl overflow-hidden relative flex items-center justify-center border border-slate-100 group-hover:border-blue-300 transition-colors">
                 <img class="batch-img w-full h-full object-cover drop-shadow-sm transition-transform duration-500 group-hover:scale-105">
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
