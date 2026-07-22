@@ -213,46 +213,49 @@ class NexusGenerativeEngine:
             self.model_name, self.target_scale, self.device, self.half_precision, self.face_restore
         )
 
-        # 2. Run Upscaler (with Memmap Patch)
-        np.zeros = memmap_zeros
-        try:
-            update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
-            upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
-        finally:
-            np.zeros = orig_zeros # Restore immediately
-
-        # 3. Face Enhancement
+        # Deep Analysis: Smart Pipeline Architecture for Extreme Scales
+        # OpenCV's warpAffine crashes at 32767 pixels. RetinaFace OOMs on 16K+.
+        # We smartly swap the order for massive scales: Face Enhance FIRST, then Upscale.
+        out_h, out_w = img.shape[0] * self.target_scale, img.shape[1] * self.target_scale
+        
         if self.face_restore and face_enhancer is not None:
             if "CodeFormer" in self.model_name:
                 self.face_weight = 0.95
-            
-            # Deep Analysis: Prevent RetinaFace OOM on massive upscaled images
-            # RetinaFace crashes when given a 16K+ image because it allocates huge tensors.
-            # We monkey-patch the detector to downscale the image just for detection, then upscale the coordinates!
-            orig_detect_faces = face_enhancer.face_helper.face_det.detect_faces
-            def safe_detect_faces(image, conf_threshold=0.97):
-                h, w = image.shape[:2]
-                max_dim = 2048 # Safe dimension for RetinaFace
-                if max(h, w) > max_dim:
-                    scale = max_dim / max(h, w)
-                    small_image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-                    bboxes = orig_detect_faces(small_image, conf_threshold)
-                    if bboxes is not None and len(bboxes) > 0:
-                        conf = bboxes[:, 4].copy()
-                        bboxes = bboxes / scale
-                        bboxes[:, 4] = conf
-                    return bboxes
-                return orig_detect_faces(image, conf_threshold)
-            
-            face_enhancer.face_helper.face_det.detect_faces = safe_detect_faces
                 
-            update_progress(tracker, task_id, 70, "Applying Generative Face Restoration...")
-            _, _, upscaled = face_enhancer.enhance(
-                upscaled, has_aligned=False, only_center_face=False, paste_back=True, weight=self.face_weight
-            )
-            
-            # Restore original method to be safe
-            face_enhancer.face_helper.face_det.detect_faces = orig_detect_faces
+            if max(out_h, out_w) > 16384:
+                # SAFE MASSIVE SCALE PIPELINE
+                update_progress(tracker, task_id, 30, "Applying Generative Face Restoration (Pre-Scaling)...")
+                _, _, img = face_enhancer.enhance(
+                    img, has_aligned=False, only_center_face=False, paste_back=True, weight=self.face_weight
+                )
+                
+                update_progress(tracker, task_id, 70, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+                np.zeros = memmap_zeros
+                try:
+                    upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
+                finally:
+                    np.zeros = orig_zeros
+            else:
+                # STANDARD PIPELINE
+                update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+                np.zeros = memmap_zeros
+                try:
+                    upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
+                finally:
+                    np.zeros = orig_zeros
+                    
+                update_progress(tracker, task_id, 70, "Applying Generative Face Restoration...")
+                _, _, upscaled = face_enhancer.enhance(
+                    upscaled, has_aligned=False, only_center_face=False, paste_back=True, weight=self.face_weight
+                )
+        else:
+            # NO FACE RESTORATION PIPELINE
+            update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+            np.zeros = memmap_zeros
+            try:
+                upscaled, _ = upsampler.enhance(img, outscale=self.target_scale)
+            finally:
+                np.zeros = orig_zeros
 
         h, w = upscaled.shape[:2]
 
