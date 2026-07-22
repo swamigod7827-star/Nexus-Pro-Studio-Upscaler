@@ -211,6 +211,33 @@ class NexusGenerativeEngine:
         if not os.path.exists(output_dir): 
             os.makedirs(output_dir)
 
+        # 1. PRE-UPSCALE ADVANCED ADJUSTMENTS (Extremely Fast on small image)
+        # Artifact Removal (Denoising)
+        if self.artifact_rem > 0:
+            rem_val = max(1, self.artifact_rem // 3)
+            img = cv2.bilateralFilter(img, 5, rem_val, rem_val)
+            
+        # Texture Control (Sharpening / Softening)
+        if self.texture != 50:
+            amount = (self.texture - 50) / 50.0
+            if amount > 0:
+                blurred = cv2.GaussianBlur(img, (0, 0), 3.0)
+                img = cv2.addWeighted(img, 1.0 + amount, blurred, -amount, 0)
+            else:
+                img = cv2.GaussianBlur(img, (0, 0), 1.0 + (-amount * 2.0))
+                
+        # Skin Tone / Color Temp Correction
+        if self.face_skin != 50:
+            shift = (self.face_skin - 50) / 50.0
+            b, g, r = cv2.split(img)
+            if shift > 0:
+                r = cv2.add(r, int(shift * 15))
+                b = cv2.subtract(b, int(shift * 15))
+            else:
+                b = cv2.add(b, int(-shift * 15))
+                r = cv2.subtract(r, int(-shift * 15))
+            img = cv2.merge((b, g, r))
+
         update_progress(tracker, task_id, 25, f"Allocating {self.device.upper()} Threads and Loading Architecture...")
         
         # Retrieve cached engines
@@ -262,8 +289,7 @@ class NexusGenerativeEngine:
         h, w = upscaled.shape[:2]
 
         # Dynamic UI Sliders Processing (Advanced Adjustments)
-        
-        # 1. Strength Blending
+        # 1. Strength Blending (Only applies if original is scaled up and blended)
         if self.strength < 1.0 and max(h, w) < 16384:
             update_progress(tracker, task_id, 80, f"Applying Upscale Strength ({int(self.strength*100)}%)...")
             try:
@@ -271,38 +297,10 @@ class NexusGenerativeEngine:
                 upscaled = cv2.addWeighted(upscaled, self.strength, base_img, 1.0 - self.strength, 0)
             except Exception:
                 pass # Skip if RAM spikes
-        
-        # 2. Artifact Removal (Denoising)
-        if self.artifact_rem > 0:
-            update_progress(tracker, task_id, 85, f"Removing Artifacts ({self.artifact_rem}%)...")
-            rem_val = max(1, self.artifact_rem // 3)
-            upscaled = cv2.bilateralFilter(upscaled, 5, rem_val, rem_val)
-            
-        # 3. Texture Control (Sharpening / Softening)
-        if self.texture != 50:
-            update_progress(tracker, task_id, 90, f"Applying Texture Control ({self.texture}%)...")
-            amount = (self.texture - 50) / 50.0  # -1.0 to 1.0
-            if amount > 0:
-                blurred = cv2.GaussianBlur(upscaled, (0, 0), 3.0)
-                upscaled = cv2.addWeighted(upscaled, 1.0 + amount, blurred, -amount, 0)
-            else:
-                upscaled = cv2.GaussianBlur(upscaled, (0, 0), 1.0 + (-amount * 2.0))
-                
-        # 4. Skin Tone / Color Temp Correction
-        if self.face_skin != 50:
-            update_progress(tracker, task_id, 92, f"Applying Color Temperature ({self.face_skin}%)...")
-            shift = (self.face_skin - 50) / 50.0 # -1.0 to 1.0
-            b, g, r = cv2.split(upscaled)
-            if shift > 0:
-                r = cv2.add(r, int(shift * 15))
-                b = cv2.subtract(b, int(shift * 15))
-            else:
-                b = cv2.add(b, int(-shift * 15))
-                r = cv2.subtract(r, int(-shift * 15))
-            upscaled = cv2.merge((b, g, r))
 
         update_progress(tracker, task_id, 95, f"Formatting for Export ({self.pil_fmt} | {self.dpi} DPI)...")
-        img_rgb = cv2.cvtColor(upscaled, cv2.COLOR_BGR2RGB)
+        # ZERO-COPY MEMORY OPTIMIZATION for massive arrays to prevent OOM
+        img_rgb = upscaled[:, :, ::-1]
         pil_master = Image.fromarray(img_rgb)
         
         # Deep Analysis: Prevent Format conflicts with Color Space
@@ -314,11 +312,15 @@ class NexusGenerativeEngine:
             pil_master = pil_master.convert('CMYK')
         elif "GRAYSCALE" in self.color_space.upper() or "B&W" in self.color_space.upper():
             pil_master = pil_master.convert('L')
+        # Deep Analysis: Prevent PIL PDF OOM Crash on Massive Images
+        if self.pil_fmt == 'PDF' and max(h, w) > 8192:
+            update_progress(tracker, task_id, 96, "Notice: Image is too massive for PDF container. Falling back to High-Quality JPEG to prevent RAM Crash.")
+            self.pil_fmt = 'JPEG'
+            self.ext = 'jpg'
 
-        import time
         orig_name = os.path.splitext(os.path.basename(input_path))[0]
-        # Use original filename with prefix and unique timestamp to prevent browser cache problems
-        master_file = f"{orig_name}_Nexus_X{int(self.target_scale)}_{int(time.time())}.{self.ext}"
+        # Remove time.time() to prevent folder clutter
+        master_file = f"{orig_name}_Nexus_X{int(self.target_scale)}.{self.ext}"
         master_path = os.path.join(output_dir, master_file)
         
         # Safe kwargs passing to prevent PIL exceptions
@@ -334,7 +336,7 @@ class NexusGenerativeEngine:
 
         update_progress(tracker, task_id, 99, "Generating Fast UI Preview...")
         
-        preview_file = f"preview_{orig_name}_{int(time.time())}.jpg"
+        preview_file = f"preview_{orig_name}.jpg"
         preview_path = os.path.join(output_dir, preview_file)
         
         preview_img = pil_master
