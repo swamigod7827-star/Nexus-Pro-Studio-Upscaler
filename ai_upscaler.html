@@ -308,7 +308,7 @@
                 <!-- ==========================================
                      3. DYNAMIC CANVAS AREA
                      ========================================== -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden" id="canvas-card">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden h-auto" id="canvas-card">
 
                     <div class="border-b border-slate-100 bg-white flex items-center justify-between p-4 shrink-0 rounded-t-2xl z-20">
                         <div class="flex items-center gap-4 text-sm font-bold text-slate-700">
@@ -323,7 +323,7 @@
                             <div class="flex items-center gap-2 mr-2 border-r border-slate-200 pr-4" title="Enable Mouse Wheel Zoom">
                                 <span class="text-xs font-bold text-slate-500">Mouse Wheel Zoom</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="toggle-scroll-zoom" class="sr-only peer">
+                                    <input type="checkbox" id="toggle-scroll-zoom" class="sr-only peer" checked>
                                     <div class="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
                                 </label>
                             </div>
@@ -334,7 +334,7 @@
                             </div>
                             <div class="w-px h-6 bg-slate-200"></div>
                             <button onclick="changeZoom(-10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-minus"></i></button>
-                            <span id="zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center">100%</span>
+                            <span id="zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center cursor-pointer" ondblclick="editZoomText(this, 'primary')" title="Double click to edit">100%</span>
                             <button onclick="changeZoom(10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-plus"></i></button>
                         </div>
                     </div>
@@ -353,12 +353,16 @@
                             </button>
                         </div>
                     
-                        <div class="hidden w-full h-full p-4 flex-col items-center justify-center relative overflow-hidden" id="preview-state">
-                            <div class="transition-transform duration-100 ease-out w-full h-full flex items-center justify-center" id="zoom-container" style="transform: scale(1); transform-origin: center center;">
-                                <div class="relative shadow-2xl overflow-hidden rounded-lg bg-slate-900 mx-auto w-full h-full flex items-center justify-center" id="image-wrapper">
-                                    <img id="upscaled-img" src="" class="w-full h-full block pointer-events-none object-contain" alt="Upscaled">
+                        <div class="hidden w-full h-full overflow-y-auto overflow-x-hidden p-4 relative" id="preview-state">
+                            <div class="absolute top-8 left-8 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-30 border border-white/10 shadow-lg pointer-events-none">Original</div>
+                            <div class="absolute top-8 right-8 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-30 shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
+                            
+                            <div class="transition-transform duration-100 ease-out w-full" id="zoom-container" style="transform: scale(1); transform-origin: top center;">
+                                <div class="relative overflow-hidden mx-auto shadow-2xl rounded-lg inline-block max-w-none" id="image-wrapper">
+                                    <img id="placeholder-img" src="" class="block opacity-0 pointer-events-none max-w-none absolute inset-0 z-0" alt="Placeholder">
+                                    <img id="upscaled-img" src="" class="w-full h-auto block pointer-events-none relative z-10" alt="Upscaled">
                                     <div id="compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.3)] z-10 pointer-events-none">
-                                        <img id="original-img" src="" class="absolute top-0 left-0 h-full max-w-none object-contain" alt="Original">
+                                        <img id="original-img" src="" class="absolute top-0 left-0 h-full max-w-none" alt="Original">
                                     </div>
                                     <div id="compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
                                         <div class="w-8 h-8 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center text-blue-600">
@@ -366,8 +370,6 @@
                                         </div>
                                     </div>
                                     <input type="range" min="0" max="100" value="50" class="compare-slider" id="compare-slider">
-                                    <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-20 border border-white/10">Original</div>
-                                    <div class="absolute top-4 right-4 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-20 shadow-lg border border-white/10">AI Upscaled</div>
                                 </div>
                             </div>
                         </div>
@@ -376,6 +378,18 @@
 
                     <div id="bottom-action-bar" class="hidden border-t border-slate-100 bg-white items-center justify-between p-4 shrink-0 rounded-b-2xl z-20 relative">
                         <span class="text-sm font-bold text-slate-800" id="bottom-file-name">filename.png</span>
+                        
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500">Scroll Zoom</span>
+                            <label class="relative inline-flex items-center cursor-pointer mr-4">
+                                <input type="checkbox" id="toggle-scroll-zoom" class="sr-only peer" checked>
+                                <div class="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                            <button onclick="changeZoom(-10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-minus"></i></button>
+                            <span id="zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center cursor-pointer" ondblclick="editZoomText(this, 'primary')" title="Double click to edit">100%</span>
+                            <button onclick="changeZoom(10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-plus"></i></button>
+                        </div>
+
                         <div class="flex gap-2">
                             <button class="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition" title="Preview">
                                 <i class="ph-bold ph-eye"></i>
@@ -391,7 +405,7 @@
                 <!-- ==========================================
                      4. BATCH CANVAS AREA
                      ========================================== -->
-                <div class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm flex-col relative overflow-hidden h-[650px]" id="batch-canvas-card">
+                <div class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm flex-col relative overflow-hidden h-auto" id="batch-canvas-card">
                     <div class="border-b border-slate-100 bg-white flex items-center p-4 shrink-0 rounded-t-2xl z-20">
                         <span class="text-sm font-bold text-slate-700 flex items-center gap-2"><i class="ph-bold ph-files text-slate-400"></i> Batch Queue</span>
                         <span class="ml-auto text-xs font-bold text-slate-500" id="batch-status-text">0 files loaded</span>
@@ -401,8 +415,8 @@
                         <div id="batch-progress-fill" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
                     </div>
 
-                    <div class="flex-1 overflow-hidden relative">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center py-20 cursor-pointer transition-all canvas-bg hover:opacity-90" id="batch-upload-state" onclick="document.getElementById('batch-file-input').click()">
+                    <div class="w-full relative h-auto overflow-hidden">
+                        <div class="flex flex-col items-center justify-center py-20 cursor-pointer transition-all canvas-bg hover:opacity-90 min-h-[400px]" id="batch-upload-state" onclick="document.getElementById('batch-file-input').click()">
                             <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-200 transition-transform hover:scale-110">
                                 <i class="ph-bold ph-files text-3xl"></i>
                             </div>
@@ -411,40 +425,57 @@
                             <input type="file" id="batch-file-input" class="hidden" accept="image/*" multiple onchange="handleBatchUpload(this.files)">
                         </div>
                         
-                        <div id="batch-file-list" class="hidden absolute inset-0 overflow-y-auto pro-scrollbar p-6 grid grid-cols-3 gap-6 content-start canvas-bg">
+                        <div id="batch-file-list" class="hidden overflow-y-auto pro-scrollbar p-6 grid grid-cols-3 gap-6 content-start canvas-bg min-h-[400px] w-full">
                             <!-- Batch items injected here -->
                         </div>
                         
                         <!-- Inline Batch Preview State -->
-                        <div id="batch-preview-state" class="hidden absolute inset-0 z-50 flex-col bg-slate-900 transition-opacity">
-                            <div class="border-b border-slate-700/50 bg-slate-900 flex justify-between items-center p-3 shrink-0 z-20">
-                                <div class="text-white font-bold text-sm flex items-center gap-2">
-                                    <button onclick="closeLightbox()" class="text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-slate-800 transition"><i class="ph-bold ph-arrow-left"></i> Back to Grid</button>
-                                    <div class="w-px h-4 bg-slate-700 mx-1"></div>
-                                    <span id="lightbox-title">Preview</span>
+                        <div id="batch-preview-state" class="hidden z-[60] flex-col bg-white w-full h-auto">
+                            <div class="border-b border-slate-100 bg-white flex justify-between items-center p-4 shrink-0 z-20">
+                                <div class="flex items-center gap-4 text-sm font-bold text-slate-700">
+                                    <button onclick="closeLightbox()" class="text-slate-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-slate-50 transition flex items-center gap-1"><i class="ph-bold ph-arrow-left"></i> Back</button>
+                                    <div class="w-px h-4 bg-slate-200"></div>
+                                    <span class="flex items-center gap-2"><i class="ph-bold ph-image text-slate-400"></i> <span id="lightbox-title">Preview</span></span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button class="w-8 h-8 bg-slate-800 hover:bg-blue-600 rounded-lg flex items-center justify-center text-white transition shadow-sm hidden" onclick="toggleLightboxZoom(event)" id="lightbox-zoom-btn">
-                                        <i class="ph-bold ph-magnifying-glass-plus text-lg" id="lightbox-zoom-icon"></i>
-                                    </button>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2 mr-2 border-r border-slate-200 pr-4" title="Enable Mouse Wheel Zoom">
+                                        <span class="text-xs font-bold text-slate-500">Mouse Wheel Zoom</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="lightbox-toggle-scroll-zoom" class="sr-only peer" checked>
+                                            <div class="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
+                                
+                                    <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                                        <button class="view-btn-batch active px-4 py-1.5 rounded-md text-xs font-bold text-blue-600 bg-white shadow-sm" onclick="setBatchView('split', this)">Split View</button>
+                                        <button class="view-btn-batch px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800" onclick="setBatchView('single', this)">Single</button>
+                                    </div>
+                                    <div class="w-px h-6 bg-slate-200"></div>
+                                    <button onclick="changeLightboxZoom(-10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-minus"></i></button>
+                                    <span id="lightbox-zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center cursor-pointer" ondblclick="editZoomText(this, 'lightbox')" title="Double click to edit">100%</span>
+                                    <button onclick="changeLightboxZoom(10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-plus"></i></button>
                                 </div>
                             </div>
                             
-                            <div class="relative overflow-auto custom-scrollbar w-full h-full flex-col items-center justify-center flex-1 bg-slate-900" id="lightbox-slider-wrapper">
-                                <div id="lightbox-inner-content" class="relative flex-shrink-0 m-auto">
-                                    <img id="lightbox-upscaled-img" src="" class="max-w-full max-h-screen object-contain pointer-events-none block">
-                                    <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none">
-                                        <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none">
-                                    </div>
-                                    <div id="lightbox-compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
-                                        <div class="w-10 h-10 bg-white rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] border border-slate-200 flex items-center justify-center text-blue-600">
-                                            <i class="ph-bold ph-arrows-left-right text-lg"></i>
+                            <div class="w-full h-full overflow-y-auto overflow-x-hidden p-4 relative canvas-bg" id="lightbox-main-area">
+                                <div class="absolute top-8 left-8 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-30 border border-white/10 shadow-lg pointer-events-none">Original</div>
+                                <div class="absolute top-8 right-8 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-30 shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
+                                
+                                <div class="transition-transform duration-100 ease-out w-full" id="lightbox-zoom-container" style="transform: scale(1); transform-origin: top center;">
+                                    <div class="relative overflow-hidden mx-auto shadow-2xl rounded-lg inline-block max-w-none" id="lightbox-image-wrapper">
+                                        <img id="lightbox-placeholder" src="" class="block opacity-0 pointer-events-none max-w-none absolute inset-0 z-0" alt="Placeholder">
+                                        <img id="lightbox-upscaled-img" src="" class="w-full h-auto block pointer-events-none relative z-10" alt="Upscaled">
+                                        <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.3)] z-10 pointer-events-none">
+                                            <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full max-w-none" alt="Original">
                                         </div>
+                                        <div id="lightbox-compare-handle" class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
+                                            <div class="w-8 h-8 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center text-blue-600">
+                                                <i class="ph-bold ph-arrows-left-right text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <input type="range" min="0" max="100" value="50" class="compare-slider" id="lightbox-slider" oninput="syncLightboxSplit()">
                                     </div>
-                                    <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-30" id="lightbox-slider" oninput="syncLightboxSplit()">
                                 </div>
-                                <div class="absolute top-4 left-4 bg-slate-800/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] border border-white/10 shadow-lg pointer-events-none">Original</div>
-                                <div class="absolute top-4 right-4 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-[40] shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
                             </div>
                         </div>
                     </div>
@@ -635,11 +666,18 @@
             }
         
             let currentZoom = 100;
-            const zoomContainer = document.getElementById('zoom-container');
-        
             function updateZoomUI() {
-                document.getElementById('zoom-text').innerText = Math.round(currentZoom) + '%';
-                zoomContainer.style.transform = `scale(${currentZoom / 100})`;
+                document.getElementById('zoom-text').innerText = currentZoom + '%';
+                const wrapper = document.getElementById('image-wrapper');
+                if (wrapper) {
+                    wrapper.style.width = currentZoom + '%';
+                }
+                
+                // Sync the original image width when wrapper resizes
+                const origImg = document.getElementById('original-img');
+                if (origImg && wrapper) {
+                    origImg.style.width = wrapper.offsetWidth + 'px';
+                }
             }
         
             function changeZoom(amount) {
@@ -653,9 +691,23 @@
                 if (!isZoomEnabled) return; 
 
                 e.preventDefault(); 
+                
+                const container = document.getElementById('zoom-container');
+                const rect = container.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                if (currentZoom === 100) {
+                    container.style.transformOrigin = `${x}% ${y}%`;
+                }
+
                 const delta = e.deltaY > 0 ? -10 : 10; 
                 currentZoom += delta;
                 if (currentZoom < 10) currentZoom = 10;
+                if (currentZoom === 100) {
+                    container.style.transformOrigin = `center center`;
+                }
+                
                 updateZoomUI();
             });
         
@@ -695,7 +747,6 @@
                 const img = new Image();
                 img.onload = function() {
                     document.getElementById('res-in').innerText = this.width + "x" + this.height;
-                    document.getElementById('image-wrapper').style.width = '100%';
                 };
                 img.src = url;
             
@@ -756,114 +807,118 @@
                 });
             }
 
-            let isLightboxZoomed = false;
-
-            function updateZoomClasses() {
-                const upImg = document.getElementById('lightbox-upscaled-img');
-                const origImg = document.getElementById('lightbox-original-img');
-                const singleImg = document.getElementById('lightbox-single-img');
-                const icon = document.getElementById('lightbox-zoom-icon');
-                const sliderWrapper = document.getElementById('lightbox-slider-wrapper');
-                const singleWrapper = document.getElementById('lightbox-single-wrapper');
-                
-                if (isLightboxZoomed) {
-                    if (upImg) upImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
-                    if (origImg) origImg.className = "absolute top-0 left-0 h-full w-auto max-w-none pointer-events-none";
-                    if (singleImg) singleImg.className = "w-auto h-auto max-w-none max-h-none pointer-events-none block";
-                    if (icon) icon.className = "ph-bold ph-magnifying-glass-minus text-xl";
-                    if (sliderWrapper) {
-                        sliderWrapper.classList.remove('items-center', 'justify-center');
-                        sliderWrapper.classList.add('items-start', 'justify-start');
-                    }
-                    if (singleWrapper) {
-                        singleWrapper.classList.remove('items-center', 'justify-center');
-                        singleWrapper.classList.add('items-start', 'justify-start');
-                    }
-                } else {
-                    if (upImg) upImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
-                    if (origImg) origImg.className = "absolute top-0 left-0 h-full w-full max-w-none object-contain pointer-events-none";
-                    if (singleImg) singleImg.className = "max-w-full max-h-screen object-contain pointer-events-none block";
-                    if (icon) icon.className = "ph-bold ph-magnifying-glass-plus text-xl";
-                    if (sliderWrapper) {
-                        sliderWrapper.classList.add('items-center', 'justify-center');
-                        sliderWrapper.classList.remove('items-start', 'justify-start');
-                    }
-                    if (singleWrapper) {
-                        singleWrapper.classList.add('items-center', 'justify-center');
-                        singleWrapper.classList.remove('items-start', 'justify-start');
-                    }
-                }
-            }
-
-            function toggleLightboxZoom(e) {
-                if(e) e.stopPropagation();
-                isLightboxZoomed = !isLightboxZoomed;
-                updateZoomClasses();
-                syncLightboxSplit();
-            }
-
-            function openLightbox(idx) {
-                const modal = document.getElementById('lightbox-modal');
-                const singleWrapper = document.getElementById('lightbox-single-wrapper');
-                const sliderWrapper = document.getElementById('lightbox-slider-wrapper');
-                const title = document.getElementById('lightbox-title');
-                const zoomBtn = document.getElementById('lightbox-zoom-btn');
-                
-                const file = batchFiles[idx];
-                const res = batchResults[idx];
-                const origUrl = URL.createObjectURL(file);
-
-                isLightboxZoomed = false;
-                updateZoomClasses();
-
-                if (res && res.status === 'success' && res.processed_path) {
-                    singleWrapper.classList.add('hidden');
-                    singleWrapper.classList.remove('flex');
-                    sliderWrapper.classList.remove('hidden');
-                    sliderWrapper.classList.add('flex');
-                    zoomBtn.classList.remove('hidden');
-                    
-                    document.getElementById('lightbox-upscaled-img').src = res.processed_path;
-                    document.getElementById('lightbox-original-img').src = origUrl;
-                    
-                    title.innerHTML = `<span class="text-emerald-400"><i class="ph-bold ph-check-circle"></i> Upscaled:</span> ${res.filename || file.name}`;
-                    
-                    setTimeout(() => {
-                        syncLightboxSplit();
-                    }, 50);
-                } else {
-                    sliderWrapper.classList.add('hidden');
-                    sliderWrapper.classList.remove('flex');
-                    singleWrapper.classList.remove('hidden');
-                    singleWrapper.classList.add('flex');
-                    zoomBtn.classList.remove('hidden');
-                    
-                    document.getElementById('lightbox-single-img').src = origUrl;
-                    title.innerHTML = `<span class="text-blue-400"><i class="ph-bold ph-image"></i> Original:</span> ${file.name}`;
-                }
-                
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                setTimeout(() => modal.classList.remove('opacity-0'), 10);
-            }
-
-            const lbSlider = document.getElementById('lightbox-slider');
-            const lbClip = document.getElementById('lightbox-compare-clip');
-            const lbHandle = document.getElementById('lightbox-compare-handle');
-            const lbOrig = document.getElementById('lightbox-original-img');
-            
             function syncLightboxSplit() {
-                if(!lbSlider) return;
+                const lbSlider = document.getElementById('lightbox-slider');
+                const lbClip = document.getElementById('lightbox-compare-clip');
+                const lbHandle = document.getElementById('lightbox-compare-handle');
+                const lbOrig = document.getElementById('lightbox-original-img');
+                const lbWrapper = document.getElementById('lightbox-image-wrapper');
+                
+                if(!lbSlider || !lbClip || !lbHandle) return;
                 const val = lbSlider.value;
                 lbClip.style.width = val + '%';
                 lbHandle.style.left = val + '%';
-                const upImg = document.getElementById('lightbox-upscaled-img');
-                if(upImg) {
-                    lbOrig.style.width = upImg.offsetWidth + 'px';
+                if(lbWrapper && lbOrig) {
+                    lbOrig.style.width = lbWrapper.offsetWidth + 'px';
                 }
             }
-            if(lbSlider) lbSlider.addEventListener('input', syncLightboxSplit);
+            document.addEventListener('DOMContentLoaded', () => {
+                const lbSlider = document.getElementById('lightbox-slider');
+                if(lbSlider) lbSlider.addEventListener('input', syncLightboxSplit);
+            });
             window.addEventListener('resize', syncLightboxSplit);
+
+            let currentLightboxZoom = 100;
+            function updateLightboxZoomUI() {
+                document.getElementById('lightbox-zoom-text').innerText = currentLightboxZoom + '%';
+                const wrapper = document.getElementById('lightbox-image-wrapper');
+                if (wrapper) {
+                    wrapper.style.width = currentLightboxZoom + '%';
+                }
+                
+                // Sync the original image width when wrapper resizes
+                const origImg = document.getElementById('lightbox-original-img');
+                if (origImg && wrapper) {
+                    origImg.style.width = wrapper.offsetWidth + 'px';
+                }
+            }
+
+            function changeLightboxZoom(amount) {
+                currentLightboxZoom += amount;
+                if (currentLightboxZoom < 10) currentLightboxZoom = 10;
+                updateLightboxZoomUI();
+            }
+
+            function editZoomText(element, type) {
+                const currentVal = parseInt(element.innerText);
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = currentVal;
+                input.className = "w-12 text-center text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 rounded outline-none";
+                input.style.height = "20px";
+                
+                input.onblur = function() {
+                    finishEditZoom(this, element, type);
+                };
+                input.onkeydown = function(e) {
+                    if(e.key === 'Enter') {
+                        finishEditZoom(this, element, type);
+                    }
+                };
+                
+                element.style.display = 'none';
+                element.parentNode.insertBefore(input, element);
+                input.focus();
+                input.select();
+            }
+
+            function finishEditZoom(input, span, type) {
+                let val = parseInt(input.value);
+                if(isNaN(val) || val < 10) val = 10;
+                
+                if (type === 'primary') {
+                    currentZoom = val;
+                    updateZoomUI();
+                } else {
+                    currentLightboxZoom = val;
+                    updateLightboxZoomUI();
+                }
+                
+                input.remove();
+                span.style.display = 'inline-block';
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const mainArea = document.getElementById('lightbox-main-area');
+                if (mainArea) {
+                    mainArea.addEventListener('wheel', (e) => {
+                        const toggle = document.getElementById('lightbox-toggle-scroll-zoom');
+                        if (!toggle || !toggle.checked) return;
+
+                        e.preventDefault();
+                        
+                        const container = document.getElementById('lightbox-zoom-container');
+                        if (container) {
+                            const rect = container.getBoundingClientRect();
+                            const x = ((e.clientX - rect.left) / rect.width) * 100;
+                            const y = ((e.clientY - rect.top) / rect.height) * 100;
+                            
+                            if (currentLightboxZoom === 100) {
+                                container.style.transformOrigin = `${x}% ${y}%`;
+                            }
+                        }
+
+                        const delta = e.deltaY > 0 ? -10 : 10;
+                        currentLightboxZoom += delta;
+                        if (currentLightboxZoom < 10) currentLightboxZoom = 10;
+                        if (currentLightboxZoom === 100 && container) {
+                            container.style.transformOrigin = `center center`;
+                        }
+                        
+                        updateLightboxZoomUI();
+                    });
+                }
+            });
 
             function openLightbox(idx) {
                 const f = batchFiles[idx];
@@ -874,23 +929,33 @@
                 
                 const upImg = document.getElementById('lightbox-upscaled-img');
                 const origImg = document.getElementById('lightbox-original-img');
-                const sliderWrapper = document.getElementById('lightbox-slider-wrapper');
+                const placeholder = document.getElementById('lightbox-placeholder');
+                const slider = document.getElementById('lightbox-slider');
+                
+                // Clear previous images instantly to prevent glitch while new images load
+                upImg.removeAttribute('src');
+                origImg.removeAttribute('src');
+                placeholder.removeAttribute('src');
                 
                 origImg.src = origUrl;
+                placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    upImg.src = r.processed_path + "?t=" + new Date().getTime();
-                    document.getElementById('lightbox-slider').value = 50;
-                    syncLightboxSplit();
+                    upImg.src = r.cached_url || (r.output_path + "?t=" + new Date().getTime());
+                    slider.value = 50;
                 } else {
                     upImg.src = origUrl;
-                    document.getElementById('lightbox-slider').value = 0;
-                    syncLightboxSplit();
+                    slider.value = 0;
                 }
+                
+                // Ensure split view recalculates when new image fully loads
+                setTimeout(syncLightboxSplit, 50);
+                
+                currentLightboxZoom = 100;
+                const zoomContainer = document.getElementById('lightbox-zoom-container');
+                if (zoomContainer) zoomContainer.style.transformOrigin = 'center top';
 
-                // Reset zoom state
-                isLightboxZoomed = false;
-                updateZoomClasses();
+                updateLightboxZoomUI();
 
                 const previewState = document.getElementById('batch-preview-state');
                 const fileList = document.getElementById('batch-file-list');
@@ -898,6 +963,8 @@
                 fileList.classList.add('hidden');
                 previewState.classList.remove('hidden');
                 previewState.classList.add('flex');
+
+                syncLightboxSplit();
             }
 
             function closeLightbox() {
@@ -911,26 +978,25 @@
 
             function setBatchView(mode, btn) {
                 const parent = btn.closest('.flex');
-                parent.querySelectorAll('.view-btn').forEach(b => {
-                    b.classList.remove('active', 'text-blue-400', 'bg-slate-900', 'shadow-sm');
-                    b.classList.add('text-slate-400');
+                parent.querySelectorAll('.view-btn-batch').forEach(b => {
+                    b.classList.remove('active', 'text-blue-600', 'bg-white', 'shadow-sm');
+                    b.classList.add('text-slate-500');
                 });
-                btn.classList.add('active', 'text-blue-400', 'bg-slate-900', 'shadow-sm');
-                btn.classList.remove('text-slate-400');
+                btn.classList.add('active', 'text-blue-600', 'bg-white', 'shadow-sm');
+                btn.classList.remove('text-slate-500');
                 
-                const splitWrapper = document.getElementById('lightbox-slider-wrapper');
-                const singleWrapper = document.getElementById('lightbox-single-wrapper');
+                const slider = document.getElementById('lightbox-slider');
+                const clip = document.getElementById('lightbox-compare-clip');
+                const handle = document.getElementById('lightbox-compare-handle');
                 
-                if(mode === 'split') {
-                    splitWrapper.classList.remove('hidden');
-                    splitWrapper.classList.add('flex');
-                    singleWrapper.classList.add('hidden');
-                    singleWrapper.classList.remove('flex');
+                if(mode === 'single') {
+                    if(clip) clip.style.width = '0%';
+                    if(handle) handle.style.display = 'none';
+                    if(slider) slider.style.display = 'none';
                 } else {
-                    splitWrapper.classList.add('hidden');
-                    splitWrapper.classList.remove('flex');
-                    singleWrapper.classList.remove('hidden');
-                    singleWrapper.classList.add('flex');
+                    if(clip && slider) clip.style.width = slider.value + '%';
+                    if(handle) handle.style.display = 'flex';
+                    if(slider) slider.style.display = 'block';
                 }
             }
 
@@ -1129,10 +1195,20 @@
                     overlay.classList.add('hidden');
                     
                     if (result.status === 'success') {
+                        result.cached_url = result.output_path + "?t=" + new Date().getTime();
+                        batchResults[idx] = result;
+                        
+                        // NOW turn the progress bar green instantly
                         progBar.style.width = '100%';
                         progBar.classList.replace('bg-blue-500', 'bg-emerald-500');
-                        document.getElementById(`batch-log-${idx}`).innerText = "Success! Image Upscaled.";
-                        batchResults[idx] = result;
+                        document.getElementById(`batch-log-${idx}`).innerText = "Success! Image Ready.";
+                        document.getElementById(`batch-log-${idx}`).classList.add('text-green-500');
+                        
+                        // Async preloader so browser fetches it silently without blocking UI
+                        const preloader = new Image();
+                        preloader.onload = () => updateBatchItem(idx, { percent: 100 });
+                        preloader.src = result.cached_url;
+                        
                     } else {
                         progBar.classList.replace('bg-blue-500', 'bg-red-500');
                         document.getElementById(`batch-log-${idx}`).innerText = "Error: " + (result.message || "Failed");
@@ -1158,9 +1234,9 @@
                     let hasFiles = false;
                     for (let i = 0; i < batchResults.length; i++) {
                         const res = batchResults[i];
-                        if(res && res.processed_path) {
+                        if(res && res.output_path) {
                             try {
-                                const response = await fetch(window.location.origin + res.processed_path);
+                                const response = await fetch(window.location.origin + res.output_path);
                                 const blob = await response.blob();
                                 zip.file(res.filename || `upscaled_${i}.png`, blob);
                                 hasFiles = true;
@@ -1295,6 +1371,11 @@
                             appendTerminalStep(statusData.log);
                             lastLog = statusData.log;
                         }
+                        
+                        if (statusData.percent === 100) {
+                            clearInterval(statusInterval);
+                            appendTerminalStep("Downloading to browser...");
+                        }
                     } catch (e) {
                         console.log("Waiting for server response...");
                     }
@@ -1344,10 +1425,21 @@
                         currentMasterImageUrl = data.master_file;     
                         currentProcessedFilename = data.filename;     
                     
-                        if (currentProcessedImageUrl.startsWith('data:image')) {
-                            document.getElementById('upscaled-img').src = currentProcessedImageUrl;
-                        } else {
-                            document.getElementById('upscaled-img').src = currentProcessedImageUrl + "?t=" + new Date().getTime(); 
+                        const imgUrl = currentProcessedImageUrl + "?t=" + new Date().getTime();
+                        try {
+                            const responseBlob = await fetch(imgUrl);
+                            const blob = await responseBlob.blob();
+                            document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
+                        } catch(e) {
+                            // CORS blocked fetch. Wait for Image preload.
+                            await new Promise((resolve) => {
+                                const preloader = new Image();
+                                preloader.onload = resolve;
+                                preloader.onerror = resolve;
+                                preloader.src = imgUrl;
+                            });
+                            document.getElementById('upscaled-img').src = imgUrl;
+                        document.getElementById('placeholder-img').src = origUrl;
                         }
                     
                         if(data.resolution) {

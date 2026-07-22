@@ -210,9 +210,6 @@ class NexusGenerativeEngine:
         else:
             pil_master.save(master_path, format=self.pil_fmt, dpi=(self.dpi, self.dpi))
 
-        _, buffer = cv2.imencode('.jpg', upscaled, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
-        b64_preview = "data:image/jpeg;base64," + base64.b64encode(buffer).decode('utf-8')
-        
         update_progress(tracker, task_id, 100, "Masterpiece Created Successfully!")
         
         # Ensure URLs have leading slash
@@ -222,7 +219,7 @@ class NexusGenerativeEngine:
             "status": "success",
             "processed_path": output_url, 
             "output_path": output_url,
-            "master_file": output_url, 
+            "master_file": output_url,
             "resolution": f"{w}x{h}",
             "filename": master_file
         }
