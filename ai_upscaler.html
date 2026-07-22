@@ -735,8 +735,53 @@
             let batchResults = [];
             let batchCurrentIndex = 0;
 
+            function autoOptimizeSettings(file) {
+                if (!file) return;
+                const name = file.name.toLowerCase();
+                
+                // Auto-Detect Portrait/Faces
+                if (name.includes('portrait') || name.includes('face') || name.includes('person') || name.includes('selfie') || name.includes('girl') || name.includes('boy')) {
+                    document.getElementById('check-face-restore').checked = true;
+                    selectOption('aimodel', 'GFPGAN (Portrait)', document.querySelector('#aimodel-menu li:nth-child(2)'));
+                    const idSlider = document.getElementById('slider-identity');
+                    idSlider.value = 85;
+                    updateVal(idSlider);
+                } else if (name.includes('anime') || name.includes('cartoon') || name.includes('drawing')) {
+                    document.getElementById('check-face-restore').checked = false;
+                    selectOption('aimodel', 'RealESRGAN (Anime/Illustration)', document.querySelector('#aimodel-menu li:nth-child(3)'));
+                    const nsSlider = document.getElementById('slider-noise');
+                    nsSlider.value = 80;
+                    updateVal(nsSlider);
+                    const txSlider = document.getElementById('slider-texture');
+                    txSlider.value = 40;
+                    updateVal(txSlider);
+                } else {
+                    document.getElementById('check-face-restore').checked = false;
+                    selectOption('aimodel', 'RealESRGAN v4 (General)', document.querySelector('#aimodel-menu li:nth-child(1)'));
+                    const txSlider = document.getElementById('slider-texture');
+                    txSlider.value = 60;
+                    updateVal(txSlider);
+                }
+                
+                // Auto-Detect Noisy/Low-Res Patterns
+                if (name.includes('noisy') || name.includes('blur') || name.includes('old')) {
+                    const artSlider = document.getElementById('slider-artifact');
+                    artSlider.value = 70;
+                    updateVal(artSlider);
+                }
+                
+                // Print / Document matching
+                if (name.includes('print') || name.includes('poster')) {
+                    selectOption('dpi', '600 DPI (High-End Print)', document.querySelector('#dpi-menu li:nth-child(3)'));
+                    selectOption('color', 'CMYK (Print Safe)', document.querySelector('#color-menu li:nth-child(2)'));
+                    selectOption('format', 'TIFF (Lossless Print)', document.querySelector('#format-menu li:nth-child(3)'));
+                }
+            }
+
             function handleUpload(files) {
                 if(!files || files.length === 0) return;
+                
+                autoOptimizeSettings(files[0]);
                 
                 const file = files[0]; // Always process the first file in single mode
                 const url = URL.createObjectURL(file);
@@ -769,6 +814,8 @@
             
             function handleBatchUpload(files) {
                 if(!files || files.length === 0) return;
+                
+                autoOptimizeSettings(files[0]);
                 
                 const newFiles = Array.from(files);
                 batchFiles = batchFiles.concat(newFiles);

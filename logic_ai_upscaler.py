@@ -145,17 +145,22 @@ class NexusGenerativeEngine:
         self.target_scale = int(''.join(filter(str.isdigit, str(payload.get('factor', '4')).split(' ')[0])) or 4)
         
         adv = json.loads(payload.get('settings', '{}'))
+        self.strength = int(adv.get('strength', 100)) / 100.0  # (0.0 to 1.0) CodeFormer Fidelity or Upscale blend
+        self.noise = int(adv.get('noise', 0)) # Threshold to switch models or denoise
+        self.texture = int(adv.get('texture', 50)) # Sharpening
         self.artifact_rem = int(adv.get('artifact', 25))
         
         face = json.loads(payload.get('face', '{}'))
         self.face_restore = str(face.get('enabled', 'false')).lower() == 'true'
         
-        # Auto-enable face restore if a portrait model is selected
+        # Auto-enable face restore if a portrait model is selected (Overrides toggle if portrait)
         if any(keyword in self.model_name for keyword in ["Face", "Portrait", "CodeFormer", "GFPGAN"]):
             self.face_restore = True
             print("[*] [UI ROUTER] Auto-enabled Face Recovery for selected portrait model.")
             
+        # Parse Identity & Skin Tone
         self.face_weight = int(face.get('identity', 85)) / 100.0 
+        self.face_skin = int(face.get('skin_tone', 50))
         
         export = json.loads(payload.get('export', '{}'))
         self.dpi = int(''.join(filter(str.isdigit, str(export.get('dpi', '600')).split(' ')[0])) or 600)
@@ -219,9 +224,6 @@ class NexusGenerativeEngine:
         out_h, out_w = img.shape[0] * self.target_scale, img.shape[1] * self.target_scale
         
         if self.face_restore and face_enhancer is not None:
-            if "CodeFormer" in self.model_name:
-                self.face_weight = 0.95
-                
             if max(out_h, out_w) > 16384:
                 # SAFE MASSIVE SCALE PIPELINE
                 update_progress(tracker, task_id, 30, "Applying Generative Face Restoration (Pre-Scaling)...")
@@ -259,10 +261,45 @@ class NexusGenerativeEngine:
 
         h, w = upscaled.shape[:2]
 
-        # Gentle Artifact Removal (Optional)
+        # Dynamic UI Sliders Processing (Advanced Adjustments)
+        
+        # 1. Strength Blending
+        if self.strength < 1.0 and max(h, w) < 16384:
+            update_progress(tracker, task_id, 80, f"Applying Upscale Strength ({int(self.strength*100)}%)...")
+            try:
+                base_img = cv2.resize(img, (w, h), interpolation=cv2.INTER_CUBIC)
+                upscaled = cv2.addWeighted(upscaled, self.strength, base_img, 1.0 - self.strength, 0)
+            except Exception:
+                pass # Skip if RAM spikes
+        
+        # 2. Artifact Removal (Denoising)
         if self.artifact_rem > 0:
+            update_progress(tracker, task_id, 85, f"Removing Artifacts ({self.artifact_rem}%)...")
             rem_val = max(1, self.artifact_rem // 3)
             upscaled = cv2.bilateralFilter(upscaled, 5, rem_val, rem_val)
+            
+        # 3. Texture Control (Sharpening / Softening)
+        if self.texture != 50:
+            update_progress(tracker, task_id, 90, f"Applying Texture Control ({self.texture}%)...")
+            amount = (self.texture - 50) / 50.0  # -1.0 to 1.0
+            if amount > 0:
+                blurred = cv2.GaussianBlur(upscaled, (0, 0), 3.0)
+                upscaled = cv2.addWeighted(upscaled, 1.0 + amount, blurred, -amount, 0)
+            else:
+                upscaled = cv2.GaussianBlur(upscaled, (0, 0), 1.0 + (-amount * 2.0))
+                
+        # 4. Skin Tone / Color Temp Correction
+        if self.face_skin != 50:
+            update_progress(tracker, task_id, 92, f"Applying Color Temperature ({self.face_skin}%)...")
+            shift = (self.face_skin - 50) / 50.0 # -1.0 to 1.0
+            b, g, r = cv2.split(upscaled)
+            if shift > 0:
+                r = cv2.add(r, int(shift * 15))
+                b = cv2.subtract(b, int(shift * 15))
+            else:
+                b = cv2.add(b, int(-shift * 15))
+                r = cv2.subtract(r, int(-shift * 15))
+            upscaled = cv2.merge((b, g, r))
 
         update_progress(tracker, task_id, 95, f"Formatting for Export ({self.pil_fmt} | {self.dpi} DPI)...")
         img_rgb = cv2.cvtColor(upscaled, cv2.COLOR_BGR2RGB)
