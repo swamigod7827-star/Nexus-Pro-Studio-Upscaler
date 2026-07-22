@@ -7,6 +7,25 @@ import glob
 import torch
 from PIL import Image
 
+# --- AUTOMATIC BASICSR PATCH ---
+# Fixes torchvision.transforms.functional_tensor deprecation in newer PyTorch
+try:
+    import site
+    paths = getattr(site, 'getsitepackages', lambda: [])()
+    if hasattr(site, 'getusersitepackages'):
+        paths.append(site.getusersitepackages())
+    for p in paths:
+        for f in glob.glob(os.path.join(p, "basicsr", "data", "degradations.py")):
+            with open(f, 'r') as file:
+                content = file.read()
+            if 'functional_tensor' in content:
+                content = content.replace('functional_tensor', 'functional')
+                with open(f, 'w') as file:
+                    file.write(content)
+except Exception:
+    pass
+# -------------------------------
+
 # Generative AI Models
 from gfpgan import GFPGANer
 from realesrgan import RealESRGANer
