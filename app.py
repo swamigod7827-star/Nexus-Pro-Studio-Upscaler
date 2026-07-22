@@ -141,6 +141,32 @@ def get_progress():
         return jsonify(data)
     return jsonify({"percent": 0, "log": "Initializing Backend Engine..."})
 
+@app.route('/api/dynamic-preview')
+def dynamic_preview():
+    import io
+    from PIL import Image
+    path = request.args.get('path')
+    if not path:
+        return "Path missing", 400
+    
+    local_path = path.lstrip('/')
+    if not os.path.exists(local_path):
+        return "File not found", 404
+        
+    try:
+        img = Image.open(local_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        # Create a fast, high-quality UI thumbnail dynamically in RAM
+        img.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+        
+        img_io = io.BytesIO()
+        img.save(img_io, 'JPEG', quality=85)
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/jpeg')
+    except Exception as e:
+        return str(e), 500
+
 @app.route('/proxy-cloud-image')
 def proxy_cloud_image():
     url = request.args.get('url')
@@ -166,19 +192,17 @@ def get_result():
             res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=60)
             colab_json = res.json()
             if colab_json.get('status') == 'success':
-                # Map remote URLs to proxy URLs
-                remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
-                image_url = colab_url.rstrip('/') + remote_image_path
-                proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(image_url)}"
-                
                 remote_master = colab_json.get('master_file')
                 master_url = colab_url.rstrip('/') + remote_master
                 proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
                 
+                # Request a dynamic RAM preview from Colab instead of a physical fake file
+                dynamic_preview_url = f"{colab_url.rstrip('/')}/api/dynamic-preview?path={urllib.parse.quote(remote_master)}"
+                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(dynamic_preview_url)}"
+                
                 return jsonify({
                     "status": "success", 
-                    "processed_path": proxy_url,
-                    "output_path": proxy_url,
+                    "cached_url": proxy_preview,
                     "master_file": proxy_master,
                     "filename": colab_json.get('filename')
                 })

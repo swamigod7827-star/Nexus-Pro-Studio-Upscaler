@@ -334,27 +334,15 @@ class NexusGenerativeEngine:
             
         pil_master.save(master_path, format=self.pil_fmt, **save_kwargs)
 
-        update_progress(tracker, task_id, 99, "Generating Fast UI Preview...")
+        update_progress(tracker, task_id, 99, "Finalizing Output File...")
         
-        preview_file = f"preview_{orig_name}.jpg"
-        preview_path = os.path.join(output_dir, preview_file)
-        
-        preview_img = pil_master
-        if pil_master.mode != 'RGB':
-            preview_img = pil_master.convert('RGB')
-        
-        preview_img.save(preview_path, format='JPEG', quality=65, optimize=True)
-
         update_progress(tracker, task_id, 100, "Masterpiece Created Successfully!")
         
         # Ensure URLs have leading slash
         output_url = "/" + master_path.replace("\\", "/").lstrip("/")
-        preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
         
         return {
             "status": "success",
-            "processed_path": preview_url, 
-            "output_path": preview_url,
             "master_file": output_url,
             "resolution": f"{w}x{h}",
             "filename": master_file

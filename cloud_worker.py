@@ -131,6 +131,31 @@ def merge_pdfs():
 def serve_output(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+@app.route('/api/dynamic-preview')
+def dynamic_preview():
+    import io
+    from PIL import Image
+    path = request.args.get('path')
+    if not path:
+        return "Path missing", 400
+    
+    local_path = path.lstrip('/')
+    if not os.path.exists(local_path):
+        return "File not found", 404
+        
+    try:
+        img = Image.open(local_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+        
+        img_io = io.BytesIO()
+        img.save(img_io, 'JPEG', quality=85)
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/jpeg')
+    except Exception as e:
+        return str(e), 500
+
 if __name__ == '__main__':
     print("\n" + "="*50)
     print("🚀 NEXUS CLOUD WORKER INITIALIZED")
