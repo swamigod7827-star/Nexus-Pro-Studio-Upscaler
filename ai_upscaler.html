@@ -1302,6 +1302,7 @@
                         preloader.src = result.cached_url;
                         
                     } else {
+                        clearInterval(checkInterval);
                         progBar.classList.replace('bg-blue-500', 'bg-red-500');
                         document.getElementById(`batch-log-${idx}`).innerText = "Error: " + (result.message || "Failed");
                         document.getElementById(`batch-log-${idx}`).classList.replace('text-slate-400', 'text-red-500');

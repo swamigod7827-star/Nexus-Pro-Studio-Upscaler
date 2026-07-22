@@ -133,7 +133,7 @@ def get_progress():
         if colab_url:
             try:
                 headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
-                res = requests.get(f"{colab_url.rstrip('/')}/api/progress?task_id={task_id}", headers=headers, timeout=5)
+                res = requests.get(f"{colab_url.rstrip('/')}/api/progress?task_id={task_id}", headers=headers, timeout=30)
                 return jsonify(res.json())
             except Exception as e:
                 return jsonify({"percent": data.get('percent', 10), "log": "Waiting for Cloud GPU response..."})
@@ -162,7 +162,8 @@ def get_result():
     if colab_url:
         try:
             headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
-            res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=10)
+            # Increased timeout to 60s because PIL Image save holds GIL and blocks Flask
+            res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=60)
             colab_json = res.json()
             if colab_json.get('status') == 'success':
                 # Map remote URLs to proxy URLs
