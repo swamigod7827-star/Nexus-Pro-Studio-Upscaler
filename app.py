@@ -206,17 +206,21 @@ def get_result():
             if colab_json.get('status') == 'success':
                 remote_master = colab_json.get('master_file')
                 master_url = colab_url.rstrip('/') + remote_master
+                proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
+                
+                remote_preview = colab_json.get('preview_file') or remote_master
+                preview_url = colab_url.rstrip('/') + remote_preview
+                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
                 return jsonify({
                     "status": "success", 
-                    "master_file": master_url,
-                    "filename": colab_json.get('filename'),
-                    "is_direct_cloud": True
+                    "cached_url": proxy_preview,
+                    "master_file": proxy_master,
+                    "filename": colab_json.get('filename')
                 })
             return jsonify(colab_json)
         except Exception as e:
-            if "Expecting value" in str(e) or "timeout" in str(e).lower() or isinstance(e, requests.exceptions.RequestException):
-                # Backend is blocked by GIL (e.g. saving huge 64x image) or proxy timed out
+            if "timeout" in str(e).lower() or isinstance(e, requests.exceptions.Timeout):
                 return jsonify({"status": "processing"})
             return jsonify({"status": "error", "message": f"Cloud Result Fetch Error: {str(e)}"})
 

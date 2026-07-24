@@ -821,23 +821,7 @@
                 placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    const imgUrl = r.master_file + (r.master_file.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
-                    
-                    const loadSplitImg = async () => {
-                        if (r.is_direct_cloud) {
-                            try {
-                                const res = await fetch(imgUrl, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
-                                const blob = await res.blob();
-                                upImg.src = URL.createObjectURL(blob);
-                            } catch(e) {
-                                upImg.src = origUrl; 
-                            }
-                        } else {
-                            upImg.src = imgUrl;
-                        }
-                    };
-                    loadSplitImg();
-                    
+                    upImg.src = r.master_file + (r.master_file.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
                     upImg.onerror = () => {
                         upImg.src = origUrl; 
                     };
@@ -1207,9 +1191,7 @@
                         
                         for (let r of successResults) {
                             try {
-                                const response = await fetch(r.master_file, {
-                                    headers: r.is_direct_cloud ? { 'Bypass-Tunnel-Reminder': 'true' } : {}
-                                });
+                                const response = await fetch(r.master_file);
                                 const blob = await response.blob();
                                 zip.file(r.filename || "Nexus_Upscaled.jpg", blob);
                                 hasFiles = true;
@@ -1410,9 +1392,7 @@
                     
                         const imgUrl = currentMasterImageUrl + (currentMasterImageUrl.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
                         try {
-                            const responseBlob = await fetch(imgUrl, {
-                                headers: data.is_direct_cloud ? { 'Bypass-Tunnel-Reminder': 'true' } : {}
-                            });
+                            const responseBlob = await fetch(imgUrl);
                             const blob = await responseBlob.blob();
                             document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
                         } catch(e) {
