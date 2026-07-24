@@ -822,7 +822,11 @@
                 
                 if (r && r.status === 'success') {
                     // Use cached_url (dynamic thumbnail) for INSTANT split view instead of blocking on the 30MB master file
-                    upImg.src = r.cached_url + (r.cached_url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                    let cacheUrl = r.cached_url;
+                    if (cacheUrl && !cacheUrl.startsWith('data:')) {
+                        cacheUrl = cacheUrl + (cacheUrl.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                    }
+                    upImg.src = cacheUrl;
                     upImg.onerror = () => {
                         upImg.src = origUrl; 
                     };
@@ -1133,7 +1137,10 @@
                         
                         // Async preloader so browser fetches it silently without blocking UI
                         const preloader = new Image();
-                        preloader.onload = () => updateBatchItem(idx, { percent: 100 });
+                        preloader.onload = () => {
+                            const batchItemImg = document.querySelector(`#batch-item-${idx} img`);
+                            if (batchItemImg) batchItemImg.src = result.cached_url;
+                        };
                         preloader.src = result.cached_url;
                         
                     } else {
