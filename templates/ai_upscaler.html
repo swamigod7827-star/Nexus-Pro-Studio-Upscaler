@@ -821,7 +821,8 @@
                 placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    upImg.src = r.master_file + (r.master_file.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                    // Use cached_url (dynamic thumbnail) for INSTANT split view instead of blocking on the 30MB master file
+                    upImg.src = r.cached_url + (r.cached_url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
                     upImg.onerror = () => {
                         upImg.src = origUrl; 
                     };

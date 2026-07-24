@@ -191,6 +191,43 @@ def proxy_cloud_image():
     except Exception as e:
         return str(e), 500
 
+import threading
+import time
+
+def background_download_from_cloud(colab_url, remote_master, local_filename):
+    local_path = os.path.join(app.root_path, 'static', 'outputs', local_filename)
+    if os.path.exists(local_path): return
+    
+    url = colab_url.rstrip('/') + remote_master
+    try:
+        headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+        r = requests.get(url, headers=headers, stream=True, timeout=600)
+        if r.status_code == 200:
+            with open(local_path + ".tmp", 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024*1024):
+                    if chunk: f.write(chunk)
+            os.rename(local_path + ".tmp", local_path)
+            print(f"[SYNC] Background download complete: {local_filename}")
+    except Exception as e:
+        print(f"[SYNC] Background download failed for {local_filename}: {e}")
+
+@app.route('/api/download-local')
+def download_local():
+    filename = request.args.get('filename')
+    if not filename: return "Missing filename", 400
+    
+    local_path = os.path.join(app.root_path, 'static', 'outputs', filename)
+    
+    # Wait for background thread to finish downloading (max 10 minutes)
+    timeout = 600
+    while not os.path.exists(local_path) and timeout > 0:
+        time.sleep(1)
+        timeout -= 1
+        
+    if os.path.exists(local_path):
+        return send_file(local_path, as_attachment=False)
+    return "File sync from cloud failed or timed out", 500
+
 @app.route('/api/result', methods=['GET'])
 def get_result():
     task_id = request.args.get('task_id')
@@ -204,29 +241,32 @@ def get_result():
             res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=60)
             
             if res.status_code in [502, 504]:
-                # Localtunnel timed out because Kaggle is blocked by the GIL (saving huge image)
                 return jsonify({"status": "processing"})
                 
             if res.status_code != 200:
-                # Other Localtunnel HTML errors
                 return jsonify({"status": "processing"})
                 
             colab_json = res.json()
             if colab_json.get('status') == 'success':
                 remote_master = colab_json.get('master_file')
-                master_url = colab_url.rstrip('/') + remote_master
-                proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
+                filename = colab_json.get('filename')
                 
-                # Request a lightweight thumbnail dynamically to prevent Localtunnel from crashing
+                # Start background sync to local disk!
+                threading.Thread(target=background_download_from_cloud, args=(colab_url, remote_master, filename)).start()
+                
+                # Request a lightweight thumbnail dynamically to prevent Localtunnel from crashing the UI
                 remote_preview = f"/api/dynamic-preview?path={urllib.parse.quote(remote_master)}"
                 preview_url = colab_url.rstrip('/') + remote_preview
                 proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
+                # Point master_file to the new local download endpoint
+                local_master = f"/api/download-local?filename={urllib.parse.quote(filename)}"
+                
                 return jsonify({
                     "status": "success", 
                     "cached_url": proxy_preview,
-                    "master_file": proxy_master,
-                    "filename": colab_json.get('filename')
+                    "master_file": local_master,
+                    "filename": filename
                 })
             return jsonify(colab_json)
         except Exception as e:
