@@ -1,9 +1,8 @@
 import os
 import glob
-from basicsr.archs.rrdbnet_arch import RRDBNet
-from realesrgan import RealESRGANer
 
 # --- AUTOMATIC BASICSR PATCH ---
+# Fixes torchvision.transforms.functional_tensor deprecation in newer PyTorch
 try:
     import site
     paths = getattr(site, 'getsitepackages', lambda: [])()
@@ -20,6 +19,9 @@ try:
 except Exception:
     pass
 # -------------------------------
+
+from basicsr.archs.rrdbnet_arch import RRDBNet
+from realesrgan import RealESRGANer
 
 _GLOBAL_ENGINES = {}
 
