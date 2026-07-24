@@ -21,6 +21,30 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 progress_tracker = {}
 task_results = {}
+from queue import Queue
+import threading
+
+task_queue = Queue()
+
+def worker_loop():
+    while True:
+        task = task_queue.get()
+        if task is None: break
+        payload = task['payload']
+        task_id = task['task_id']
+        try:
+            from logic.core_engine import process_upscale_logic
+            result = process_upscale_logic(payload, progress_tracker)
+            task_results[task_id] = result
+        except Exception as e:
+            import traceback
+            print(f"\n[CRITICAL ERROR in queue] {e}\n{traceback.format_exc()}")
+            task_results[task_id] = {"status": "error", "message": str(e)}
+            progress_tracker[task_id] = {"percent": 100, "log": "Failed."}
+        finally:
+            task_queue.task_done()
+
+threading.Thread(target=worker_loop, daemon=True).start()
 
 @app.route('/api/process-upscale', methods=['POST'])
 def process_upscale():
@@ -34,8 +58,11 @@ def process_upscale():
 
         task_id = request.form.get('task_id', str(uuid.uuid4()))
 
-        progress_tracker[task_id] = {"percent": 5, "log": "Image Uploaded. Waking up Cloud AI Orchestrator..."}
-        input_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
+        progress_tracker[task_id] = {"percent": 5, "log": "Added to Queue. Waiting for Cloud GPU..."}
+        
+        # Use exact original filename without uuid prefixes for output consistency
+        original_filename = file.filename
+        input_path = os.path.join(UPLOAD_FOLDER, original_filename)
         file.save(input_path)
 
         payload = {
@@ -43,25 +70,17 @@ def process_upscale():
             'task_id': task_id,
             'factor': request.form.get('factor', '4X Standard Upscale'),
             'model': request.form.get('model', 'RealESRGAN v4 (General)'),
-            'mode': request.form.get('mode', 'Cloud GPU (Fast)'),
+            'mode': request.form.get('mode', 'CPU Precision (Slow)'),
             'settings': request.form.get('settings', '{}'),
             'face': request.form.get('face', '{}'),
             'export': request.form.get('export', '{}')
         }
 
-        def run_task():
-            try:
-                result = process_upscale_logic(payload, progress_tracker)
-                task_results[task_id] = result
-            except Exception as e:
-                print(f"\n[CRITICAL ERROR in background] {e}\n{traceback.format_exc()}")
-                task_results[task_id] = {"status": "error", "message": str(e)}
-                progress_tracker[task_id] = {"percent": 100, "log": "Failed."}
-
-        threading.Thread(target=run_task).start()
+        # Add to background queue to prevent CUDA OOM on multiple concurrent batch requests
+        task_queue.put({'payload': payload, 'task_id': task_id})
         
-        return jsonify({"status": "processing", "task_id": task_id})
-
+        return jsonify({'status': 'processing', 'task_id': task_id, 'message': 'Queued in Cloud.'})
+        
     except Exception as e:
         print(f"\n[SERVER ERROR] {e}\n{traceback.format_exc()}")
         return jsonify({'status': 'error', 'message': str(e)})

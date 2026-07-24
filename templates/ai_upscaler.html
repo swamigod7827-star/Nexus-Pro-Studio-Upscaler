@@ -821,15 +821,22 @@
                 placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    // User requested to ONLY show original image in preview for speed ("fast fetch")
-                    // and because massive upscaled images crash the browser.
-                    upImg.src = origUrl;
-                    if(slider) slider.style.display = 'none';
+                    upImg.src = r.master_file + (r.master_file.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                    upImg.onerror = () => {
+                        upImg.src = origUrl; 
+                    };
+                    if(slider) {
+                        slider.style.display = 'block';
+                        slider.value = 50;
+                    }
                     const handle = document.getElementById('lightbox-compare-handle');
-                    if(handle) handle.style.display = 'none';
+                    if(handle) handle.style.display = 'flex';
                 } else {
                     upImg.src = origUrl;
-                    if(slider) slider.value = 0;
+                    if(slider) {
+                        slider.style.display = 'block';
+                        slider.value = 0;
+                    }
                 }
                 
                 // Ensure split view recalculates when new image fully loads
@@ -1383,13 +1390,24 @@
                         currentMasterImageUrl = data.master_file;     
                         currentProcessedFilename = data.filename;     
                     
-                        // User requested fast fetch logic: show original image only in preview.
-                        const origSrc = document.getElementById('placeholder-img').src || URL.createObjectURL(document.getElementById('file-input').files[0]);
-                        document.getElementById('upscaled-img').src = origSrc;
-                        document.getElementById('original-img').src = origSrc;
+                        const imgUrl = currentMasterImageUrl + (currentMasterImageUrl.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                        try {
+                            const responseBlob = await fetch(imgUrl);
+                            const blob = await responseBlob.blob();
+                            document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
+                        } catch(e) {
+                            // CORS blocked fetch. Wait for Image preload.
+                            await new Promise((resolve) => {
+                                const preloader = new Image();
+                                preloader.onload = resolve;
+                                preloader.onerror = resolve;
+                                preloader.src = imgUrl;
+                            });
+                            document.getElementById('upscaled-img').src = imgUrl;
+                        }
                         
-                        document.getElementById('compare-slider').style.display = 'none';
-                        document.getElementById('compare-handle').style.display = 'none';
+                        document.getElementById('compare-slider').style.display = 'block';
+                        document.getElementById('compare-handle').style.display = 'flex';
                         
                         if(data.resolution) {
                             document.getElementById('res-out').innerText = data.resolution + " (AI)";

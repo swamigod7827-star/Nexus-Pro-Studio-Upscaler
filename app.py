@@ -18,13 +18,37 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # 🚀 NAYA: Global Dictionary to track live progress of tasks
 progress_tracker = {}
+task_results = {}
+
+from queue import Queue
+import threading
+local_task_queue = Queue()
+
+def local_worker_loop():
+    while True:
+        task = local_task_queue.get()
+        if task is None: break
+        payload = task['payload']
+        task_id = task['task_id']
+        try:
+            from logic.core_engine import process_upscale_logic
+            result = process_upscale_logic(payload, progress_tracker)
+            task_results[task_id] = result
+        except Exception as e:
+            import traceback
+            print(f"\n[CRITICAL ERROR in queue] {e}\n{traceback.format_exc()}")
+            task_results[task_id] = {"status": "error", "message": str(e)}
+            progress_tracker[task_id] = {"percent": 100, "log": "Failed."}
+        finally:
+            local_task_queue.task_done()
+
+threading.Thread(target=local_worker_loop, daemon=True).start()
 
 @app.route('/')
 def index():
     return render_template('ai_upscaler.html')
 
 # 🚀 NAYA: Real-Time API Endpoint for Progress Polling
-import threading
 import uuid
 import urllib.parse
 
@@ -100,21 +124,10 @@ def process_upscale():
             'face': request.form.get('face', '{}'),
             'export': request.form.get('export', '{}')
         }
-
-        # Run in background to prevent browser/tunnel timeout on long tasks
-        def run_task():
-            try:
-                result = process_upscale_logic(payload, progress_tracker)
-                task_results[task_id] = result
-            except Exception as e:
-                import traceback
-                print(f"\n[CRITICAL ERROR in background] {e}\n{traceback.format_exc()}")
-                task_results[task_id] = {"status": "error", "message": str(e)}
-                progress_tracker[task_id] = {"percent": 100, "log": "Failed."}
-
-        threading.Thread(target=run_task).start()
+        # Add to local queue
+        local_task_queue.put({'payload': payload, 'task_id': task_id})
         
-        return jsonify({"status": "processing", "task_id": task_id})
+        return jsonify({"status": "processing", "task_id": task_id, "message": "Queued locally."})
 
     except Exception as e:
         import traceback
