@@ -2,7 +2,7 @@ import os
 import uuid
 import threading
 import traceback
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory, send_file, render_template
 from flask_cors import CORS
 from logic.core_engine import process_upscale_logic
 import logging
@@ -23,6 +23,11 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 progress_tracker = {}
 task_results = {}
+
+@app.route('/')
+def index():
+    return render_template('ai_upscaler.html')
+
 from queue import Queue
 import threading
 
@@ -99,6 +104,9 @@ def get_result():
     task_id = request.args.get('task_id')
     res = task_results.get(task_id)
     if res:
+        # If the UI is polling us directly, we must provide cached_url for the fast preview
+        if res.get('status') == 'success' and 'preview_file' in res and 'cached_url' not in res:
+            res['cached_url'] = res['preview_file']
         return jsonify(res)
     return jsonify({"status": "processing"})
 
