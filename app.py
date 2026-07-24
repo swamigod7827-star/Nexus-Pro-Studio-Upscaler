@@ -259,6 +259,7 @@ def get_result():
                 threading.Thread(target=background_download_from_cloud, args=(colab_url, remote_master, filename)).start()
                 
                 # Pass the ultra-fast OpenCV base64 preview directly
+                remote_preview = colab_json.get('preview_file')
                 if remote_preview and remote_preview.startswith('data:'):
                     proxy_preview = remote_preview
                 else:
