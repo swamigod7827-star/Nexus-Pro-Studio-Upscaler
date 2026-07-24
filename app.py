@@ -173,8 +173,8 @@ def proxy_cloud_image():
         return "URL is missing", 400
     try:
         headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
-        req = requests.get(url, headers=headers, stream=True, timeout=30)
-        return Response(stream_with_context(req.iter_content(chunk_size=8192)), content_type=req.headers.get('Content-Type', 'image/jpeg'))
+        req = requests.get(url, headers=headers, stream=True, timeout=60)
+        return Response(stream_with_context(req.iter_content(chunk_size=1024*1024)), content_type=req.headers.get('Content-Type', 'image/jpeg'))
     except Exception as e:
         return str(e), 500
 

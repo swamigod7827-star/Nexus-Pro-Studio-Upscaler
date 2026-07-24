@@ -280,8 +280,8 @@
                                 <div class="absolute top-8 right-8 bg-blue-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider z-30 shadow-lg border border-white/10 pointer-events-none">AI Upscaled</div>
                                 
                                 <div class="transition-transform duration-100 ease-out w-full" id="lightbox-zoom-container" style="transform: scale(1); transform-origin: top center;">
-                                    <div class="relative overflow-hidden mx-auto shadow-2xl rounded-lg inline-block max-w-none min-w-[300px] min-h-[300px] bg-slate-100/50" id="lightbox-image-wrapper">
-                                        <img id="lightbox-placeholder" src="" class="block opacity-0 pointer-events-none max-w-none absolute inset-0 z-0 min-w-[300px] min-h-[300px]" alt="Placeholder">
+                                    <div class="relative overflow-hidden mx-auto shadow-2xl rounded-lg inline-block max-w-none" id="lightbox-image-wrapper">
+                                        <img id="lightbox-placeholder" src="" class="block opacity-0 pointer-events-none max-w-none absolute inset-0 z-0" alt="Placeholder">
                                         <img id="lightbox-upscaled-img" src="" class="w-full h-auto block pointer-events-none relative z-10" alt="Upscaled">
                                         <div id="lightbox-compare-clip" class="absolute top-0 left-0 bottom-0 w-1/2 overflow-hidden border-r-[2px] border-white shadow-[2px_0_10px_rgba(0,0,0,0.3)] z-10 pointer-events-none">
                                             <img id="lightbox-original-img" src="" class="absolute top-0 left-0 h-full max-w-none" alt="Original">
@@ -821,18 +821,15 @@
                 placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    const base_url = r.cached_url || r.master_file;
-                    upImg.src = base_url + (base_url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
-                    
-                    upImg.onerror = () => {
-                        console.error("Batch preview image failed to load:", upImg.src);
-                        // Fallback to original image if preview proxy completely fails
-                        upImg.src = origUrl; 
-                    };
-                    slider.value = 50;
+                    // User requested to ONLY show original image in preview for speed ("fast fetch")
+                    // and because massive upscaled images crash the browser.
+                    upImg.src = origUrl;
+                    if(slider) slider.style.display = 'none';
+                    const handle = document.getElementById('lightbox-compare-handle');
+                    if(handle) handle.style.display = 'none';
                 } else {
                     upImg.src = origUrl;
-                    slider.value = 0;
+                    if(slider) slider.value = 0;
                 }
                 
                 // Ensure split view recalculates when new image fully loads
@@ -1383,27 +1380,17 @@
                         topSpinner.style.backgroundColor = '#10b981';
                         topIcon.className = "ph-bold ph-check text-3xl text-white z-10 relative";
                     
-                        currentProcessedImageUrl = data.cached_url || data.output_path || data.master_file; 
                         currentMasterImageUrl = data.master_file;     
                         currentProcessedFilename = data.filename;     
                     
-                        const imgUrl = currentProcessedImageUrl + "?t=" + new Date().getTime();
-                        try {
-                            const responseBlob = await fetch(imgUrl);
-                            const blob = await responseBlob.blob();
-                            document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
-                        } catch(e) {
-                            // CORS blocked fetch. Wait for Image preload.
-                            await new Promise((resolve) => {
-                                const preloader = new Image();
-                                preloader.onload = resolve;
-                                preloader.onerror = resolve;
-                                preloader.src = imgUrl;
-                            });
-                            document.getElementById('upscaled-img').src = imgUrl;
-                        document.getElementById('placeholder-img').src = origUrl;
-                        }
-                    
+                        // User requested fast fetch logic: show original image only in preview.
+                        const origSrc = document.getElementById('placeholder-img').src || URL.createObjectURL(document.getElementById('file-input').files[0]);
+                        document.getElementById('upscaled-img').src = origSrc;
+                        document.getElementById('original-img').src = origSrc;
+                        
+                        document.getElementById('compare-slider').style.display = 'none';
+                        document.getElementById('compare-handle').style.display = 'none';
+                        
                         if(data.resolution) {
                             document.getElementById('res-out').innerText = data.resolution + " (AI)";
                         }

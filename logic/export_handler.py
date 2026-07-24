@@ -45,6 +45,9 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
 
     orig_name = os.path.splitext(os.path.basename(input_path))[0]
     
+    if orig_name.startswith(f"{task_id}_"):
+        orig_name = orig_name[len(task_id)+1:]
+    
     # Special Extension Handling (Mocking PSD and CDR with compatible formats)
     final_ext = ext
     if 'PSD' in fmt_str.upper():
@@ -70,26 +73,9 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
         
     pil_master.save(master_path, format=pil_fmt, **save_kwargs)
     
-    # --- Generate Lightweight Preview ---
-    # To prevent browser crash when UI tries to load huge files (or unsupported formats like PSD/CDR/PDF)
-    update_progress(tracker, task_id, 98, "Generating UI Preview Thumbnail...")
-    preview_file = f"{orig_name}_preview_{task_id}.jpg"
-    preview_path = os.path.join(output_dir, preview_file)
-    
-    # Resize preview to max 1920px for fast UI loading
-    max_dim = max(pil_master.width, pil_master.height)
-    if max_dim > 1920:
-        ratio = 1920 / max_dim
-        new_size = (int(pil_master.width * ratio), int(pil_master.height * ratio))
-        preview_img = pil_master.resize(new_size, Image.Resampling.LANCZOS)
-    else:
-        preview_img = pil_master.copy()
-        
-    if preview_img.mode != 'RGB':
-        preview_img = preview_img.convert('RGB')
-    preview_img.save(preview_path, format='JPEG', quality=85)
+    # User requested to skip preview generation to save time ("fast fetch") and stop saving 2 files to the output dir.
+    update_progress(tracker, task_id, 98, "Skipping thumbnail generation (Fast Mode)...")
     
     output_url = "/" + master_path.replace("\\", "/").lstrip("/")
-    preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
     
-    return master_file, output_url, preview_url
+    return master_file, output_url, output_url
