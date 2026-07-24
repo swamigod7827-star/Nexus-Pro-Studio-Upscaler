@@ -262,8 +262,8 @@ def get_result():
                 remote_master = colab_json.get('master_file')
                 filename = colab_json.get('filename')
                 
-                # Start background sync to local disk!
-                threading.Thread(target=background_download_from_cloud, args=(colab_url, remote_master, filename)).start()
+                # Removed background sync to prevent localtunnel congestion during Batch Mode.
+                # Instead, we will directly proxy the master file when the user requests a download.
                 
                 # Pass the ultra-fast OpenCV base64 preview directly
                 remote_preview = colab_json.get('preview_file')
@@ -273,13 +273,14 @@ def get_result():
                     preview_url = colab_url.rstrip('/') + (remote_preview or "")
                     proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
-                # Point master_file to the new local download endpoint
-                local_master = f"/api/download-local?filename={urllib.parse.quote(filename)}"
+                # Point master_file to the direct cloud proxy instead of local disk
+                master_url = colab_url.rstrip('/') + remote_master
+                proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
                 
                 return jsonify({
                     "status": "success", 
                     "cached_url": proxy_preview,
-                    "master_file": local_master,
+                    "master_file": proxy_master,
                     "filename": filename
                 })
             return jsonify(colab_json)

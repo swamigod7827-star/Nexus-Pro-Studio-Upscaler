@@ -57,6 +57,9 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
+                        <button id="open-cloud-btn" onclick="openCloudUI()" class="hidden px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-bold rounded-lg shadow hover:opacity-90 transition-opacity flex items-center gap-2" title="Open Cloud UI in new tab">
+                            <i class="ph-bold ph-globe"></i> Open Cloud UI
+                        </button>
                         <button onclick="document.getElementById('colab-modal').classList.remove('hidden')" class="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold rounded-lg shadow hover:opacity-90 transition-opacity flex items-center gap-2">
                             🚀 Connect Cloud GPU
                         </button>
@@ -376,6 +379,8 @@
                             procModeEl.innerText = "GPU Accelerated (Fast)";
                         } else {
                             procModeEl.innerText = "External Cloud GPU";
+                            const btn = document.getElementById('open-cloud-btn');
+                            if(btn) btn.classList.remove('hidden');
                         }
                         document.getElementById('procmode-menu').querySelector('li:nth-child(1)').className = "px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors";
                         if(liveGpuEl) liveGpuEl.innerText = gpuName.split(' ')[0] + " Active";
@@ -385,6 +390,8 @@
                             procModeEl.innerText = "CPU Precision (Slow)";
                         } else {
                             procModeEl.innerText = "External Cloud GPU";
+                            const btn = document.getElementById('open-cloud-btn');
+                            if(btn) btn.classList.remove('hidden');
                         }
                         document.getElementById('procmode-menu').querySelector('li:nth-child(2)').className = "px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors";
                         if(liveGpuEl) liveGpuEl.innerText = "Basic GPU / Off";
@@ -396,6 +403,15 @@
                 }
             });
         
+            function openCloudUI() {
+                const url = localStorage.getItem('nexus_colab_url');
+                if (url) {
+                    window.open(url.replace(/\/+$/, ''), '_blank');
+                } else {
+                    alert('Please connect a Cloud GPU first!');
+                }
+            }
+            
             function switchTab(tabName, btn) {
                 document.querySelectorAll('.setting-tab').forEach(b => {
                     b.classList.remove('active', 'text-blue-600', 'border-blue-600');
