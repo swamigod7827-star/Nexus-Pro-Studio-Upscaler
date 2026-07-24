@@ -202,6 +202,15 @@ def get_result():
             headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
             # Increased timeout to 60s because PIL Image save holds GIL and blocks Flask
             res = requests.get(f"{colab_url.rstrip('/')}/api/result?task_id={task_id}", headers=headers, timeout=60)
+            
+            if res.status_code in [502, 504]:
+                # Localtunnel timed out because Kaggle is blocked by the GIL (saving huge image)
+                return jsonify({"status": "processing"})
+                
+            if res.status_code != 200:
+                # Other Localtunnel HTML errors
+                return jsonify({"status": "processing"})
+                
             colab_json = res.json()
             if colab_json.get('status') == 'success':
                 remote_master = colab_json.get('master_file')
@@ -221,7 +230,7 @@ def get_result():
                 })
             return jsonify(colab_json)
         except Exception as e:
-            if "timeout" in str(e).lower() or isinstance(e, requests.exceptions.Timeout):
+            if "timeout" in str(e).lower() or isinstance(e, requests.exceptions.Timeout) or isinstance(e, requests.exceptions.ConnectionError):
                 return jsonify({"status": "processing"})
             return jsonify({"status": "error", "message": f"Cloud Result Fetch Error: {str(e)}"})
 
