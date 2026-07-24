@@ -258,8 +258,7 @@ def get_result():
                 # Start background sync to local disk!
                 threading.Thread(target=background_download_from_cloud, args=(colab_url, remote_master, filename)).start()
                 
-                # Request a lightweight thumbnail dynamically to prevent Localtunnel from crashing the UI
-                remote_preview = f"/api/dynamic-preview?path={urllib.parse.quote(remote_master)}"
+                # Proxy the ultra-fast OpenCV preview directly
                 preview_url = colab_url.rstrip('/') + remote_preview
                 proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
@@ -282,7 +281,7 @@ def get_result():
     if res:
         if res.get('status') == 'success':
             master = res.get('master_file')
-            res['cached_url'] = f"/api/dynamic-preview?path={urllib.parse.quote(master)}"
+            res['cached_url'] = res.get('preview_file') or master
             res['output_path'] = master
         return jsonify(res)
     return jsonify({"status": "processing"})

@@ -1,4 +1,5 @@
 import os
+import cv2
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
@@ -75,9 +76,21 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
         
     pil_master.save(master_path, format=pil_fmt, **save_kwargs)
     
-    # User requested to skip preview generation to save time ("fast fetch") and stop saving 2 files to the output dir.
-    update_progress(tracker, task_id, 98, "Skipping thumbnail generation (Fast Mode)...")
+    update_progress(tracker, task_id, 98, "Generating High-Speed UI Preview...")
     
+    # Generate ultra-fast thumbnail using OpenCV instead of PIL
+    max_dim = 2048
+    if max(h, w) > max_dim:
+        scale = max_dim / max(h, w)
+        preview_img = cv2.resize(upscaled, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+    else:
+        preview_img = upscaled
+        
+    preview_file = f"{orig_name}_preview_{task_id}.jpg"
+    preview_path = os.path.join(output_dir, preview_file)
+    cv2.imwrite(preview_path, preview_img, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+    
+    preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
     output_url = "/" + master_path.replace("\\", "/").lstrip("/")
     
-    return master_file, output_url, output_url
+    return master_file, output_url, preview_url
