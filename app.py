@@ -208,7 +208,8 @@ def get_result():
                 master_url = colab_url.rstrip('/') + remote_master
                 proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
                 
-                remote_preview = colab_json.get('preview_file') or remote_master
+                # Request a lightweight thumbnail dynamically to prevent Localtunnel from crashing
+                remote_preview = f"/api/dynamic-preview?path={urllib.parse.quote(remote_master)}"
                 preview_url = colab_url.rstrip('/') + remote_preview
                 proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
