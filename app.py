@@ -111,7 +111,7 @@ def process_upscale():
         
         # LOCAL MODE (or running INSIDE Colab)
         progress_tracker[task_id] = {"percent": 5, "log": "Image Uploaded. Waking up Local AI Orchestrator..."}
-        input_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
+        input_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(input_path)
 
         payload = {
@@ -206,17 +206,12 @@ def get_result():
             if colab_json.get('status') == 'success':
                 remote_master = colab_json.get('master_file')
                 master_url = colab_url.rstrip('/') + remote_master
-                proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
-                
-                remote_preview = colab_json.get('preview_file') or remote_master
-                preview_url = colab_url.rstrip('/') + remote_preview
-                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
                 return jsonify({
                     "status": "success", 
-                    "cached_url": proxy_preview,
-                    "master_file": proxy_master,
-                    "filename": colab_json.get('filename')
+                    "master_file": master_url,
+                    "filename": colab_json.get('filename'),
+                    "is_direct_cloud": True
                 })
             return jsonify(colab_json)
         except Exception as e:
