@@ -1085,7 +1085,9 @@
                     formData.append('colab_url', colabUrl.trim());
                 }
 
+                let isChecking = true;
                 const checkInterval = setInterval(async () => {
+                    if (!isChecking) return;
                     try {
                         const res = await fetch(`/api/progress?task_id=${taskId}`);
                         const data = await res.json();
@@ -1113,6 +1115,7 @@
                         }
                     }
                     
+                    isChecking = false;
                     clearInterval(checkInterval);
                     overlay.classList.add('hidden');
                     
@@ -1123,7 +1126,9 @@
                         // NOW turn the progress bar green instantly
                         progBar.style.width = '100%';
                         progBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                        progBar.classList.replace('bg-red-500', 'bg-emerald-500'); // Just in case it was red
                         document.getElementById(`batch-log-${idx}`).innerText = "Success! Image Ready.";
+                        document.getElementById(`batch-log-${idx}`).classList.remove('text-red-500', 'text-slate-400');
                         document.getElementById(`batch-log-${idx}`).classList.add('text-green-500');
                         
                         // Async preloader so browser fetches it silently without blocking UI
@@ -1132,12 +1137,12 @@
                         preloader.src = result.cached_url;
                         
                     } else {
-                        clearInterval(checkInterval);
                         progBar.classList.replace('bg-blue-500', 'bg-red-500');
                         document.getElementById(`batch-log-${idx}`).innerText = "Error: " + (result.message || "Failed");
                         document.getElementById(`batch-log-${idx}`).classList.replace('text-slate-400', 'text-red-500');
                     }
                 } catch(e) {
+                    isChecking = false;
                     clearInterval(checkInterval);
                     overlay.classList.add('hidden');
                     progBar.classList.replace('bg-blue-500', 'bg-red-500');

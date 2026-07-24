@@ -86,8 +86,11 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
     else:
         preview_img = upscaled
         
+    preview_dir = os.path.join('static', '.previews')
+    os.makedirs(preview_dir, exist_ok=True)
+        
     preview_file = f"{orig_name}_preview_{task_id}.jpg"
-    preview_path = os.path.join(output_dir, preview_file)
+    preview_path = os.path.join(preview_dir, preview_file)
     cv2.imwrite(preview_path, preview_img, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
     
     preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
