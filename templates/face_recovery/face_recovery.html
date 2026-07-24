@@ -1,0 +1,20 @@
+<div id="tab-face" class="hidden grid-cols-3 gap-8 items-center">
+                            <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Enable Face Recovery</h4>
+                                    <p class="text-[10px] text-slate-500 mt-1">Uses CodeFormer for facial details</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="check-face-restore" class="sr-only peer toggle-checkbox" checked>
+                                    <div class="w-10 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Identity Preservation</span><span class="text-blue-600 val">90%</span></div>
+                                <input type="range" min="0" max="100" value="90" class="pro-slider" id="slider-identity" oninput="updateVal(this)">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Natural Skin Tone</span><span class="text-blue-600 val">50%</span></div>
+                                <input type="range" min="0" max="100" value="50" class="pro-slider" id="slider-skin" oninput="updateVal(this)">
+                            </div>
+                        </div>

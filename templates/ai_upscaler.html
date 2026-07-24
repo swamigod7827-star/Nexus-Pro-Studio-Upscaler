@@ -101,206 +101,24 @@
                 
                     <div class="p-5">
                         <!-- TAB 1: Primary Settings -->
-                        <div id="tab-primary" class="grid grid-cols-12 gap-6 items-end relative z-[60]">
-                            <div class="col-span-3 relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Upscale Level</label>
-                                <div onclick="toggleDropdown('upscale-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="upscale-selected-text">4X Standard Upscale</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="upscale-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
-                                        <li onclick="selectOption('upscale', '2X Detail Enhance', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">2X Detail Enhance</li>
-                                        <li onclick="selectOption('upscale', '4X Standard Upscale', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">4X Standard Upscale</li>
-                                        <li onclick="selectOption('upscale', '6X Mid-Tier Resolution', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">6X Mid-Tier Resolution</li>
-                                        <li onclick="selectOption('upscale', '8X Studio Quality', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">8X Studio Quality</li>
-                                        <li onclick="selectOption('upscale', '10X Extreme', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">10X Extreme</li>
-                                        <li onclick="selectOption('upscale', '16X Billboard', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">16X Billboard</li>
-                                        <li onclick="selectOption('upscale', '32K Absolute Vector', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">32K Absolute Vector</li>
-                                        <li onclick="selectOption('upscale', '64K Neural Maximum', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">64K Neural Maximum</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <div class="col-span-3 relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">AI Model Selection</label>
-                                <div onclick="toggleDropdown('aimodel-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="aimodel-selected-text" class="truncate pr-2">RealESRGAN v4 (General)</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="aimodel-menu" class="hidden absolute top-full left-0 mt-2 w-full min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
-                                        <li onclick="selectOption('aimodel', 'RealESRGAN v4 (General)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">RealESRGAN v4 (General)</li>
-                                        <li onclick="selectOption('aimodel', 'Anime Sharp (Illustrations)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Anime Sharp (Illustrations)</li>
-                                        <li onclick="selectOption('aimodel', 'CodeFormer (Face Focus)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CodeFormer (Face Focus)</li>
-                                        <li onclick="selectOption('aimodel', 'SwinIR (Texture Detail)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SwinIR (Texture Detail)</li>
-                                        <li onclick="selectOption('aimodel', 'BSRGAN (Real-world)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BSRGAN (Real-world)</li>
-                                        <li onclick="selectOption('aimodel', 'GFPGAN (Portrait)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GFPGAN (Portrait)</li>
-                                        <li onclick="selectOption('aimodel', 'HAT (High Accuracy)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HAT (High Accuracy)</li>
-                                        <li onclick="selectOption('aimodel', 'NAFNet (Fast Restoration)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">NAFNet (Fast Restoration)</li>
-                                        <li onclick="selectOption('aimodel', 'TextMaster (Font Preserver)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TextMaster (Font Preserver)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <div class="col-span-3 relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Processing Mode</label>
-                                <div onclick="toggleDropdown('procmode-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="procmode-selected-text">Auto Detecting...</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="procmode-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
-                                        <li onclick="selectOption('procmode', 'GPU Accelerated (Fast)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GPU Accelerated (Fast)</li>
-                                        <li onclick="selectOption('procmode', 'CPU Precision (Slow)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CPU Precision (Slow)</li>
-                                        <li onclick="selectOption('procmode', 'External Cloud GPU', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors flex items-center gap-2"><i class="ph-fill ph-cloud"></i> External Cloud GPU</li>
-                                        <li onclick="selectOption('procmode', 'TensorRT (Max Performance)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TensorRT (Max Performance)</li>
-                                        <li onclick="selectOption('procmode', 'DirectML (AMD/Intel GPU)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">DirectML (AMD/Intel GPU)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <div class="col-span-3 flex gap-3">
-                                <button id="runUpscaleBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 py-3" onclick="processImage(event)">
-                                    <i class="ph-bold ph-lightning text-lg"></i> Run Upscaler
-                                </button>
-                            </div>
-                        </div>
+                        {% include 'primary_settings/primary_settings.html' %}
                     
                         <!-- TAB 2: Advanced Enhancements -->
-                        <div id="tab-advanced" class="hidden grid-cols-4 gap-8">
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>AI Strength</span><span class="text-blue-600 val">80%</span></div>
-                                <input type="range" min="0" max="100" value="80" class="pro-slider" id="slider-strength" oninput="updateVal(this)">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Noise Reduction</span><span class="text-blue-600 val">45%</span></div>
-                                <input type="range" min="0" max="100" value="45" class="pro-slider" id="slider-noise" oninput="updateVal(this)">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Texture Recovery</span><span class="text-blue-600 val">60%</span></div>
-                                <input type="range" min="0" max="100" value="60" class="pro-slider" id="slider-texture" oninput="updateVal(this)">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Artifact Removal</span><span class="text-blue-600 val">25%</span></div>
-                                <input type="range" min="0" max="100" value="25" class="pro-slider" id="slider-artifact" oninput="updateVal(this)">
-                            </div>
-                        </div>
+                        {% include 'advanced_adjustments/advanced_adjustments.html' %}
                     
                         <!-- TAB 3: Face Recovery -->
-                        <div id="tab-face" class="hidden grid-cols-3 gap-8 items-center">
-                            <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-sm">Enable Face Recovery</h4>
-                                    <p class="text-[10px] text-slate-500 mt-1">Uses CodeFormer for facial details</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="check-face-restore" class="sr-only peer toggle-checkbox" checked>
-                                    <div class="w-10 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Identity Preservation</span><span class="text-blue-600 val">90%</span></div>
-                                <input type="range" min="0" max="100" value="90" class="pro-slider" id="slider-identity" oninput="updateVal(this)">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2"><span>Natural Skin Tone</span><span class="text-blue-600 val">50%</span></div>
-                                <input type="range" min="0" max="100" value="50" class="pro-slider" id="slider-skin" oninput="updateVal(this)">
-                            </div>
-                        </div>
+                        {% include 'face_recovery/face_recovery.html' %}
                     
                         <!-- TAB 4: Output & Export -->
                         <div id="tab-export" class="hidden grid-cols-4 gap-6 items-end relative z-[60]">
-                            <div class="relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Output Format</label>
-                                <div onclick="toggleDropdown('format-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="format-selected-text" class="truncate pr-2">PNG (Lossless & Transparent)</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="format-menu" class="hidden absolute top-full left-0 mt-2 min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar whitespace-nowrap">
-                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-1 uppercase tracking-widest pointer-events-none">Web & Images</li>
-                                        <li onclick="selectOption('format', 'PNG (Lossless & Transparent)', this)" class="px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">PNG (Lossless & Transparent)</li>
-                                        <li onclick="selectOption('format', 'JPG / JPEG (Standard)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">JPG / JPEG (Standard)</li>
-                                        <li onclick="selectOption('format', 'WEBP (Web Optimized)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">WEBP (Web Optimized)</li>
-                                        <li onclick="selectOption('format', 'BMP (Raw Bitmap)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BMP (Raw Bitmap)</li>
-                                        <li onclick="selectOption('format', 'GIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GIF</li>
-                                        <li onclick="selectOption('format', 'AVIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AVIF</li>
-                                        <li onclick="selectOption('format', 'HEIC / HEIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HEIC / HEIF</li>
-                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Professional & Print</li>
-                                        <li onclick="selectOption('format', 'TIFF / TIF (High-End Print)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TIFF / TIF (High-End Print)</li>
-                                        <li onclick="selectOption('format', 'PDF (Print Document)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PDF (Print Document)</li>
-                                        <li onclick="selectOption('format', 'EPS (Vector Container)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">EPS (Vector Container)</li>
-                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Design Wrappers</li>
-                                        <li onclick="selectOption('format', 'PSD / PSB (Photoshop)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PSD / PSB (Photoshop)</li>
-                                        <li onclick="selectOption('format', 'AI (Illustrator)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AI (Illustrator)</li>
-                                        <li onclick="selectOption('format', 'CDR (CorelDRAW)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CDR (CorelDRAW)</li>
-                                        <li onclick="selectOption('format', 'INDD (InDesign)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">INDD (InDesign)</li>
-                                        <li onclick="selectOption('format', 'SVG (Scalable Vector)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SVG (Scalable Vector)</li>
-                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Camera RAW</li>
-                                        <li onclick="selectOption('format', 'RAW, DNG, CR2, NEF...', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">RAW, DNG, CR2, NEF...</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <div class="relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Color Space</label>
-                                <div onclick="toggleDropdown('color-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="color-selected-text">sRGB (Web)</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="color-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
-                                        <li onclick="selectOption('color', 'sRGB (Web)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">sRGB (Web)</li>
-                                        <li onclick="selectOption('color', 'Adobe RGB (Print)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Adobe RGB (Print)</li>
-                                        <li onclick="selectOption('color', 'Display P3', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Display P3</li>
-                                        <li onclick="selectOption('color', 'ProPhoto RGB', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">ProPhoto RGB</li>
-                                        <li onclick="selectOption('color', 'CMYK (Commercial)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CMYK (Commercial)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <div class="relative">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Print Resolution</label>
-                                <div onclick="toggleDropdown('dpi-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
-                                    <span id="dpi-selected-text">600 DPI (Studio Print)</span>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div id="dpi-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
-                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
-                                        <li onclick="selectOption('dpi', '72 DPI (Web Only)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">72 DPI (Web Only)</li>
-                                        <li onclick="selectOption('dpi', '300 DPI (Standard)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">300 DPI (Standard)</li>
-                                        <li onclick="selectOption('dpi', '600 DPI (Studio Print)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">600 DPI (Studio Print)</li>
-                                        <li onclick="selectOption('dpi', '1200 DPI (Fine Art)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">1200 DPI (Fine Art)</li>
-                                        <li onclick="selectOption('dpi', '2400 DPI (Micro Detail)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">2400 DPI (Micro Detail)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        
-                            <button onclick="downloadUpscaledImage()" class="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition py-3 flex items-center justify-center gap-2 shadow-lg">
-                                <i class="ph-bold ph-download-simple"></i> Export Image
-                            </button>
-                        </div>
+    {% include "output_export/output_format.html" %}
+    {% include "output_export/color_space.html" %}
+    {% include "output_export/print_resolution.html" %}
+    {% include "output_export/export_button.html" %}
+</div>
                         
                         <!-- TAB 5: Batch Processing Instructions -->
-                        <div id="tab-batch" class="hidden flex-col gap-4 relative z-[60]">
-                            <h3 class="text-lg font-bold text-slate-800">Batch Processing Mode</h3>
-                            <p class="text-sm text-slate-500">Drag and drop multiple images below to process them sequentially using your current settings.</p>
-                            <div class="flex gap-4 items-center mt-2">
-                                <button id="batch-start-btn" onclick="startBatchProcessing()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center gap-2 hidden">
-                                    <i class="ph-bold ph-lightning"></i> Run Batch Upscaler
-                                </button>
-                                <button id="batch-add-more-btn" onclick="document.getElementById('batch-file-input').click()" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2 hidden">
-                                    <i class="ph-bold ph-plus"></i> Add More
-                                </button>
-                                <button id="batch-download-btn" onclick="downloadAllBatch()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/30 transition flex items-center gap-2 hidden">
-                                    <i class="ph-bold ph-download-simple"></i> Download All Completed
-                                </button>
-                                <button onclick="resetBatch()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition flex items-center gap-2">
-                                    <i class="ph-bold ph-trash"></i> Clear Queue
-                                </button>
-                            </div>
-                        </div>
+                        {% include "batch_processing/batch_processing.html" %}
 
                     </div>
                 </div>
@@ -1003,7 +821,7 @@
                 placeholder.src = origUrl;
                 
                 if (r && r.status === 'success') {
-                    upImg.src = r.cached_url || (r.output_path + "?t=" + new Date().getTime());
+                    upImg.src = r.cached_url || (r.master_file + "?t=" + new Date().getTime());
                     slider.value = 50;
                 } else {
                     upImg.src = origUrl;
@@ -1287,7 +1105,7 @@
                     overlay.classList.add('hidden');
                     
                     if (result.status === 'success') {
-                        result.cached_url = result.output_path + "?t=" + new Date().getTime();
+                        result.cached_url = result.cached_url || (result.master_file + "?t=" + new Date().getTime());
                         batchResults[idx] = result;
                         
                         // NOW turn the progress bar green instantly
@@ -1327,7 +1145,7 @@
                     
                     if (exportFormat === 'PDF') {
                         dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Merging PDFs...';
-                        const filePaths = batchResults.map(r => r.output_path).filter(Boolean);
+                        const filePaths = batchResults.map(r => r.master_file).filter(Boolean);
                         
                         const colabUrl = document.getElementById('colab-url').value;
                         const useColab = document.getElementById('use-colab').checked;
@@ -1360,9 +1178,9 @@
                         let hasFiles = false;
                         for (let i = 0; i < batchResults.length; i++) {
                             const res = batchResults[i];
-                            if(res && res.output_path) {
+                            if(res && res.master_file) {
                                 try {
-                                    const response = await fetch(window.location.origin + res.output_path);
+                                    const response = await fetch(window.location.origin + res.master_file);
                                     const blob = await response.blob();
                                     zip.file(res.filename || `upscaled_${i}.${exportFormat.toLowerCase()}`, blob);
                                     hasFiles = true;
@@ -1558,7 +1376,7 @@
                         topSpinner.style.backgroundColor = '#10b981';
                         topIcon.className = "ph-bold ph-check text-3xl text-white z-10 relative";
                     
-                        currentProcessedImageUrl = data.output_path; 
+                        currentProcessedImageUrl = data.cached_url || data.output_path || data.master_file; 
                         currentMasterImageUrl = data.master_file;     
                         currentProcessedFilename = data.filename;     
                     

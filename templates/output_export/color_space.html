@@ -1,0 +1,16 @@
+<div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Color Space</label>
+                                <div onclick="toggleDropdown('color-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="color-selected-text">sRGB (Web)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="color-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('color', 'sRGB (Web)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">sRGB (Web)</li>
+                                        <li onclick="selectOption('color', 'Adobe RGB (Print)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Adobe RGB (Print)</li>
+                                        <li onclick="selectOption('color', 'Display P3', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Display P3</li>
+                                        <li onclick="selectOption('color', 'ProPhoto RGB', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">ProPhoto RGB</li>
+                                        <li onclick="selectOption('color', 'CMYK (Commercial)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CMYK (Commercial)</li>
+                                    </ul>
+                                </div>
+                            </div>

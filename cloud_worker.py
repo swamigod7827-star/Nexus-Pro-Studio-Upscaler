@@ -4,7 +4,7 @@ import threading
 import traceback
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
-import logic_ai_upscaler
+from logic.core_engine import process_upscale_logic
 import logging
 from PIL import Image
 
@@ -51,7 +51,7 @@ def process_upscale():
 
         def run_task():
             try:
-                result = logic_ai_upscaler.process_upscale_logic(payload, progress_tracker)
+                result = process_upscale_logic(payload, progress_tracker)
                 task_results[task_id] = result
             except Exception as e:
                 print(f"\n[CRITICAL ERROR in background] {e}\n{traceback.format_exc()}")

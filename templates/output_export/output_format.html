@@ -1,0 +1,31 @@
+<div class="relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Output Format</label>
+                                <div onclick="toggleDropdown('format-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="format-selected-text" class="truncate pr-2">PNG (Lossless & Transparent)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="format-menu" class="hidden absolute top-full left-0 mt-2 min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar whitespace-nowrap">
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-1 uppercase tracking-widest pointer-events-none">Web & Images</li>
+                                        <li onclick="selectOption('format', 'PNG (Lossless & Transparent)', this)" class="px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">PNG (Lossless & Transparent)</li>
+                                        <li onclick="selectOption('format', 'JPG / JPEG (Standard)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">JPG / JPEG (Standard)</li>
+                                        <li onclick="selectOption('format', 'WEBP (Web Optimized)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">WEBP (Web Optimized)</li>
+                                        <li onclick="selectOption('format', 'BMP (Raw Bitmap)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BMP (Raw Bitmap)</li>
+                                        <li onclick="selectOption('format', 'GIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GIF</li>
+                                        <li onclick="selectOption('format', 'AVIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AVIF</li>
+                                        <li onclick="selectOption('format', 'HEIC / HEIF', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HEIC / HEIF</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Professional & Print</li>
+                                        <li onclick="selectOption('format', 'TIFF / TIF (High-End Print)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TIFF / TIF (High-End Print)</li>
+                                        <li onclick="selectOption('format', 'PDF (Print Document)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PDF (Print Document)</li>
+                                        <li onclick="selectOption('format', 'EPS (Vector Container)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">EPS (Vector Container)</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Design Wrappers</li>
+                                        <li onclick="selectOption('format', 'PSD / PSB (Photoshop)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">PSD / PSB (Photoshop)</li>
+                                        <li onclick="selectOption('format', 'AI (Illustrator)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">AI (Illustrator)</li>
+                                        <li onclick="selectOption('format', 'CDR (CorelDRAW)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CDR (CorelDRAW)</li>
+                                        <li onclick="selectOption('format', 'INDD (InDesign)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">INDD (InDesign)</li>
+                                        <li onclick="selectOption('format', 'SVG (Scalable Vector)', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SVG (Scalable Vector)</li>
+                                        <li class="px-3 py-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm rounded-lg mx-2 mb-1 mt-3 uppercase tracking-widest pointer-events-none">Camera RAW</li>
+                                        <li onclick="selectOption('format', 'RAW, DNG, CR2, NEF...', this)" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">RAW, DNG, CR2, NEF...</li>
+                                    </ul>
+                                </div>
+                            </div>

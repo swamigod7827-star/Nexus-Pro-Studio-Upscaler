@@ -1,0 +1,65 @@
+<div id="tab-primary" class="grid grid-cols-12 gap-6 items-end relative z-[60]">
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Upscale Level</label>
+                                <div onclick="toggleDropdown('upscale-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="upscale-selected-text">4X Standard Upscale</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="upscale-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('upscale', '2X Detail Enhance', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">2X Detail Enhance</li>
+                                        <li onclick="selectOption('upscale', '4X Standard Upscale', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">4X Standard Upscale</li>
+                                        <li onclick="selectOption('upscale', '6X Mid-Tier Resolution', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">6X Mid-Tier Resolution</li>
+                                        <li onclick="selectOption('upscale', '8X Studio Quality', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">8X Studio Quality</li>
+                                        <li onclick="selectOption('upscale', '10X Extreme', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">10X Extreme</li>
+                                        <li onclick="selectOption('upscale', '16X Billboard', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">16X Billboard</li>
+                                        <li onclick="selectOption('upscale', '32K Absolute Vector', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">32K Absolute Vector</li>
+                                        <li onclick="selectOption('upscale', '64K Neural Maximum', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">64K Neural Maximum</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">AI Model Selection</label>
+                                <div onclick="toggleDropdown('aimodel-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="aimodel-selected-text" class="truncate pr-2">RealESRGAN v4 (General)</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="aimodel-menu" class="hidden absolute top-full left-0 mt-2 w-full min-w-max bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('aimodel', 'RealESRGAN v4 (General)', this)" class="px-4 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 cursor-pointer transition-colors">RealESRGAN v4 (General)</li>
+                                        <li onclick="selectOption('aimodel', 'Anime Sharp (Illustrations)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">Anime Sharp (Illustrations)</li>
+                                        <li onclick="selectOption('aimodel', 'CodeFormer (Face Focus)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CodeFormer (Face Focus)</li>
+                                        <li onclick="selectOption('aimodel', 'SwinIR (Texture Detail)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">SwinIR (Texture Detail)</li>
+                                        <li onclick="selectOption('aimodel', 'BSRGAN (Real-world)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">BSRGAN (Real-world)</li>
+                                        <li onclick="selectOption('aimodel', 'GFPGAN (Portrait)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GFPGAN (Portrait)</li>
+                                        <li onclick="selectOption('aimodel', 'HAT (High Accuracy)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">HAT (High Accuracy)</li>
+                                        <li onclick="selectOption('aimodel', 'NAFNet (Fast Restoration)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">NAFNet (Fast Restoration)</li>
+                                        <li onclick="selectOption('aimodel', 'TextMaster (Font Preserver)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TextMaster (Font Preserver)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 relative">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Processing Mode</label>
+                                <div onclick="toggleDropdown('procmode-menu', event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 transition-all shadow-sm cursor-pointer flex justify-between items-center group">
+                                    <span id="procmode-selected-text">Auto Detecting...</span>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div id="procmode-menu" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-[60]">
+                                    <ul class="max-h-60 overflow-y-auto pro-scrollbar">
+                                        <li onclick="selectOption('procmode', 'GPU Accelerated (Fast)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">GPU Accelerated (Fast)</li>
+                                        <li onclick="selectOption('procmode', 'CPU Precision (Slow)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">CPU Precision (Slow)</li>
+                                        <li onclick="selectOption('procmode', 'External Cloud GPU', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors flex items-center gap-2"><i class="ph-fill ph-cloud"></i> External Cloud GPU</li>
+                                        <li onclick="selectOption('procmode', 'TensorRT (Max Performance)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">TensorRT (Max Performance)</li>
+                                        <li onclick="selectOption('procmode', 'DirectML (AMD/Intel GPU)', this)" class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors">DirectML (AMD/Intel GPU)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        
+                            <div class="col-span-3 flex gap-3">
+                                <button id="runUpscaleBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 py-3" onclick="processImage(event)">
+                                    <i class="ph-bold ph-lightning text-lg"></i> Run Upscaler
+                                </button>
+                            </div>
+                        </div>

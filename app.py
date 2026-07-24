@@ -1,10 +1,10 @@
 import os
 import requests
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template
 from flask_cors import CORS
-import logic_ai_upscaler
+from logic.core_engine import process_upscale_logic
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 import logging
@@ -21,7 +21,7 @@ progress_tracker = {}
 
 @app.route('/')
 def index():
-    return send_from_directory('.', 'ai_upscaler.html')
+    return render_template('ai_upscaler.html')
 
 # 🚀 NAYA: Real-Time API Endpoint for Progress Polling
 import threading
@@ -104,8 +104,7 @@ def process_upscale():
         # Run in background to prevent browser/tunnel timeout on long tasks
         def run_task():
             try:
-                import logic_ai_upscaler
-                result = logic_ai_upscaler.process_upscale_logic(payload, progress_tracker)
+                result = process_upscale_logic(payload, progress_tracker)
                 task_results[task_id] = result
             except Exception as e:
                 import traceback
@@ -196,9 +195,9 @@ def get_result():
                 master_url = colab_url.rstrip('/') + remote_master
                 proxy_master = f"/proxy-cloud-image?url={urllib.parse.quote(master_url)}"
                 
-                # Request a dynamic RAM preview from Colab instead of a physical fake file
-                dynamic_preview_url = f"{colab_url.rstrip('/')}/api/dynamic-preview?path={urllib.parse.quote(remote_master)}"
-                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(dynamic_preview_url)}"
+                remote_preview = colab_json.get('preview_file') or remote_master
+                preview_url = colab_url.rstrip('/') + remote_preview
+                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
                 return jsonify({
                     "status": "success", 
@@ -208,10 +207,16 @@ def get_result():
                 })
             return jsonify(colab_json)
         except Exception as e:
+            if "Expecting value" in str(e) or "timeout" in str(e).lower() or isinstance(e, requests.exceptions.RequestException):
+                # Backend is blocked by GIL (e.g. saving huge 64x image) or proxy timed out
+                return jsonify({"status": "processing"})
             return jsonify({"status": "error", "message": f"Cloud Result Fetch Error: {str(e)}"})
 
     res = task_results.get(task_id)
     if res:
+        if res.get('status') == 'success':
+            res['cached_url'] = res.get('preview_file') or res.get('master_file')
+            res['output_path'] = res.get('master_file')
         return jsonify(res)
     return jsonify({"status": "processing"})
 
