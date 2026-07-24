@@ -85,29 +85,36 @@ def process_upscale():
                     del form_data['colab_url']
                 
                 headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
-                # Colab runs the same app.py, so it will return {"status": "processing"} instantly
-                response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers)
-                
-                if response.status_code == 200:
-                    colab_json = response.json()
-                    if colab_json.get('status') == 'processing':
-                        return jsonify({"status": "processing", "task_id": task_id})
-                    elif colab_json.get('status') == 'success': # fallback if colab runs old app.py
-                        remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
-                        image_url = colab_url.rstrip('/') + remote_image_path
-                        proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(image_url)}"
-                        return jsonify({
-                            "status": "success", 
-                            "processed_path": proxy_url,
-                            "output_path": proxy_url,
-                            "master_file": proxy_url,
-                            "filename": colab_json.get('filename', f'Cloud_{file.filename}')
-                        })
+                # Add a timeout so we don't hang forever, and handle tunnel drops gracefully
+                try:
+                    response = requests.post(colab_endpoint, files=files, data=form_data, headers=headers, timeout=60)
+                    
+                    if response.status_code == 200:
+                        colab_json = response.json()
+                        if colab_json.get('status') == 'processing':
+                            return jsonify({"status": "processing", "task_id": task_id})
+                        elif colab_json.get('status') == 'success':
+                            remote_image_path = colab_json.get('output_path') or colab_json.get('processed_path')
+                            image_url = colab_url.rstrip('/') + remote_image_path
+                            proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(image_url)}"
+                            return jsonify({
+                                "status": "success", 
+                                "processed_path": proxy_url,
+                                "output_path": proxy_url,
+                                "master_file": proxy_url,
+                                "filename": colab_json.get('filename', f'Cloud_{file.filename}')
+                            })
+                        else:
+                            raise Exception(colab_json.get('message', 'Unknown Cloud Error'))
+                    elif response.status_code in [502, 504]:
+                        # Tunnel dropped the response, but the file likely reached Colab. Assume queued.
+                        return jsonify({"status": "processing", "task_id": task_id, "message": "Queued in Cloud (Gateway Timeout Ignored)."})
                     else:
-                        raise Exception(colab_json.get('message', 'Unknown Cloud Error'))
-                else:
-                    error_msg = f"API returned {response.status_code}: {response.text[:150]}"
-                    raise Exception(error_msg)
+                        error_msg = f"API returned {response.status_code}: {response.text[:150]}"
+                        raise Exception(error_msg)
+                except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+                    # Connection dropped while waiting for response, but file probably uploaded.
+                    return jsonify({"status": "processing", "task_id": task_id, "message": "Queued in Cloud (Connection Error Ignored)."})
             except Exception as e:
                 progress_tracker[task_id] = {"percent": 0, "log": f"Cloud Error: {str(e)}"}
                 return jsonify({'status': 'error', 'message': f"Cloud GPU Error: {str(e)}"})
