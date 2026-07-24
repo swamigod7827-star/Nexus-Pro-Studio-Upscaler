@@ -86,7 +86,7 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
     else:
         preview_img = upscaled
         
-    preview_dir = os.path.join('static', '.previews')
+    preview_dir = os.path.join('static', 'ui_cache')
     os.makedirs(preview_dir, exist_ok=True)
         
     preview_file = f"{orig_name}_preview_{task_id}.jpg"
