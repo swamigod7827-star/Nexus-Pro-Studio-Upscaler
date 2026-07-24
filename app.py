@@ -1,8 +1,11 @@
 import os
 import requests
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template, send_file
 from flask_cors import CORS
 from logic.core_engine import process_upscale_logic
+from PIL import Image
+
+Image.MAX_IMAGE_PIXELS = None
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
@@ -157,6 +160,7 @@ def get_progress():
 def dynamic_preview():
     import io
     from PIL import Image
+    Image.MAX_IMAGE_PIXELS = None
     path = request.args.get('path')
     if not path:
         return "Path missing", 400
@@ -277,8 +281,9 @@ def get_result():
     res = task_results.get(task_id)
     if res:
         if res.get('status') == 'success':
-            res['cached_url'] = res.get('preview_file') or res.get('master_file')
-            res['output_path'] = res.get('master_file')
+            master = res.get('master_file')
+            res['cached_url'] = f"/api/dynamic-preview?path={urllib.parse.quote(master)}"
+            res['output_path'] = master
         return jsonify(res)
     return jsonify({"status": "processing"})
 

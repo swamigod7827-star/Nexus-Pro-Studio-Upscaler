@@ -1,6 +1,8 @@
 import os
 from PIL import Image
 
+Image.MAX_IMAGE_PIXELS = None
+
 def get_format_details(fmt_str):
     fmt_str = fmt_str.upper()
     if any(x in fmt_str for x in ['CDR', 'AI', 'EPS']):

@@ -8,6 +8,8 @@ from logic.core_engine import process_upscale_logic
 import logging
 from PIL import Image
 
+Image.MAX_IMAGE_PIXELS = None
+
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
@@ -154,6 +156,7 @@ def serve_output(filename):
 def dynamic_preview():
     import io
     from PIL import Image
+    Image.MAX_IMAGE_PIXELS = None
     path = request.args.get('path')
     if not path:
         return "Path missing", 400
