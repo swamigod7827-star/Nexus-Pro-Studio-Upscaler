@@ -1396,11 +1396,19 @@
                         currentMasterImageUrl = data.master_file;     
                         currentProcessedFilename = data.filename;     
                     
-                        const imgUrl = currentMasterImageUrl + (currentMasterImageUrl.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                        let imgUrl = data.cached_url || currentMasterImageUrl;
+                        if (!imgUrl.startsWith('data:')) {
+                            imgUrl = imgUrl + (imgUrl.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+                        }
+                        
                         try {
-                            const responseBlob = await fetch(imgUrl);
-                            const blob = await responseBlob.blob();
-                            document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
+                            if (imgUrl.startsWith('data:')) {
+                                document.getElementById('upscaled-img').src = imgUrl;
+                            } else {
+                                const responseBlob = await fetch(imgUrl);
+                                const blob = await responseBlob.blob();
+                                document.getElementById('upscaled-img').src = URL.createObjectURL(blob);
+                            }
                         } catch(e) {
                             // CORS blocked fetch. Wait for Image preload.
                             await new Promise((resolve) => {

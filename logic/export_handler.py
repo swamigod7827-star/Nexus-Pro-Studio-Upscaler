@@ -76,7 +76,7 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
         
     pil_master.save(master_path, format=pil_fmt, **save_kwargs)
     
-    update_progress(tracker, task_id, 98, "Generating High-Speed UI Preview...")
+    update_progress(tracker, task_id, 98, "Generating High-Speed UI Preview (In-Memory)...")
     
     # Generate ultra-fast thumbnail using OpenCV instead of PIL
     max_dim = 2048
@@ -86,14 +86,12 @@ def export_image(upscaled, input_path, output_dir, target_scale, color_space, dp
     else:
         preview_img = upscaled
         
-    preview_dir = os.path.join('static', 'ui_cache')
-    os.makedirs(preview_dir, exist_ok=True)
-        
-    preview_file = f"{orig_name}_preview_{task_id}.jpg"
-    preview_path = os.path.join(preview_dir, preview_file)
-    cv2.imwrite(preview_path, preview_img, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+    # Encode as Base64 in memory! NO FOLDER NEEDED!
+    _, buffer = cv2.imencode('.jpg', preview_img, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+    import base64
+    base64_str = base64.b64encode(buffer).decode('utf-8')
+    preview_url = f"data:image/jpeg;base64,{base64_str}"
     
-    preview_url = "/" + preview_path.replace("\\", "/").lstrip("/")
     output_url = "/" + master_path.replace("\\", "/").lstrip("/")
     
     return master_file, output_url, preview_url

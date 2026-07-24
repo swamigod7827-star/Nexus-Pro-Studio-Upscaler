@@ -258,9 +258,12 @@ def get_result():
                 # Start background sync to local disk!
                 threading.Thread(target=background_download_from_cloud, args=(colab_url, remote_master, filename)).start()
                 
-                # Proxy the ultra-fast OpenCV preview directly
-                preview_url = colab_url.rstrip('/') + remote_preview
-                proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
+                # Pass the ultra-fast OpenCV base64 preview directly
+                if remote_preview and remote_preview.startswith('data:'):
+                    proxy_preview = remote_preview
+                else:
+                    preview_url = colab_url.rstrip('/') + (remote_preview or "")
+                    proxy_preview = f"/proxy-cloud-image?url={urllib.parse.quote(preview_url)}"
                 
                 # Point master_file to the new local download endpoint
                 local_master = f"/api/download-local?filename={urllib.parse.quote(filename)}"
