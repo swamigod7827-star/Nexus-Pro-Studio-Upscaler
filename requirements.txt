@@ -13,8 +13,6 @@ Pillow>=10.0.1          # For EXIF, ICC Profile, and Metadata extraction
 numpy>=1.26.0           # For high-speed matrix and mathematical calculations
 
 # --- Deep Learning Vision Engines (Stage 1) ---
-torch>=2.1.0            # PyTorch: Main AI engine for neural networks
-torchvision>=0.16.0     # PyTorch vision utilities
 transformers>=4.34.0    # HuggingFace Transformers for OpenAI CLIP (Zero-Shot AI)
 
 # --- Upscaling Libraries ---
