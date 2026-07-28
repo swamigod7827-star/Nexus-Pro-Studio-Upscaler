@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+/weights/
+/uploads/
+/static/outputs/
+.env
+/ai_env/
+.ipynb_checkpoints/
+*.pth
