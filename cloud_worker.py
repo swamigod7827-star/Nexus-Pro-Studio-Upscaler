@@ -118,37 +118,49 @@ def merge_pdfs():
         if not file_urls:
             return jsonify({"status": "error", "message": "No files provided."})
 
+        from pypdf import PdfWriter, PdfReader
+        from PIL import Image
+        import io
+
         merged_pdf_path = os.path.join(OUTPUT_FOLDER, f"Merged_Batch_{uuid.uuid4().hex[:8]}.pdf")
         
-        images = []
+        pdf_writer = PdfWriter()
+        has_pages = False
+        
         for url in file_urls:
             filename = url.split('/')[-1].split('?')[0]
             local_filepath = os.path.join(OUTPUT_FOLDER, filename)
             
             if os.path.exists(local_filepath):
                 try:
-                    img = Image.open(local_filepath)
-                    if img.mode != 'RGB':
-                        img = img.convert('RGB')
-                    images.append(img)
+                    if local_filepath.lower().endswith('.pdf'):
+                        pdf_reader = PdfReader(local_filepath)
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                        has_pages = True
+                    else:
+                        img = Image.open(local_filepath)
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                            
+                        temp_pdf = io.BytesIO()
+                        img.save(temp_pdf, format="PDF", resolution=100.0)
+                        temp_pdf.seek(0)
+                        
+                        pdf_reader = PdfReader(temp_pdf)
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                        has_pages = True
                 except Exception as e:
-                    print(f"Error opening image {local_filepath} for PDF merge: {e}")
+                    print(f"Error processing file {local_filepath} for PDF merge: {e}")
             else:
                 print(f"Warning: File not found for PDF merge: {local_filepath}")
 
-        if not images:
+        if not has_pages:
             return jsonify({"status": "error", "message": "Could not read any valid images to merge."})
 
-        first_image = images[0]
-        other_images = images[1:]
-        
-        first_image.save(
-            merged_pdf_path,
-            "PDF",
-            resolution=100.0,
-            save_all=True,
-            append_images=other_images
-        )
+        with open(merged_pdf_path, "wb") as f_out:
+            pdf_writer.write(f_out)
         
         return jsonify({"status": "success", "merged_url": f"/{merged_pdf_path}"})
 
