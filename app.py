@@ -298,6 +298,37 @@ def get_result():
         return jsonify(res)
     return jsonify({"status": "processing"})
 
+import urllib.parse
+def ensure_local_file(url):
+    if not url: return None
+    filename = url.split('/')[-1].split('?')[0]
+    local_filepath = os.path.join(OUTPUT_FOLDER, filename)
+    if os.path.exists(local_filepath):
+        return local_filepath
+
+    target_url = None
+    if 'proxy-cloud-image?url=' in url:
+        parsed_url = urllib.parse.urlparse(url)
+        qs = urllib.parse.parse_qs(parsed_url.query)
+        if 'url' in qs:
+            target_url = qs['url'][0]
+    elif url.startswith('http'):
+        target_url = url
+    elif url.startswith('/'):
+        target_url = f"http://127.0.0.1:5000{url}"
+
+    if target_url:
+        try:
+            headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+            r = requests.get(target_url, headers=headers, timeout=30)
+            if r.status_code == 200:
+                with open(local_filepath, 'wb') as f:
+                    f.write(r.content)
+                return local_filepath
+        except Exception as e:
+            print(f"Error downloading {target_url}: {e}")
+    return None
+
 @app.route('/api/merge-pdfs', methods=['POST'])
 def merge_pdfs():
     try:
@@ -322,45 +353,100 @@ def merge_pdfs():
             return jsonify(cloud_json)
 
         # Local Processing
+        from pypdf import PdfWriter, PdfReader
         from PIL import Image
+        import io
+        
         merged_pdf_path = os.path.join(OUTPUT_FOLDER, f"Merged_Batch_{uuid.uuid4().hex[:8]}.pdf")
         
-        images = []
+        pdf_writer = PdfWriter()
+        has_pages = False
+        
         for url in file_urls:
-            filename = url.split('/')[-1].split('?')[0]
-            local_filepath = os.path.join(OUTPUT_FOLDER, filename)
+            local_filepath = ensure_local_file(url)
             
-            if os.path.exists(local_filepath):
+            if local_filepath and os.path.exists(local_filepath):
                 try:
-                    img = Image.open(local_filepath)
-                    if img.mode != 'RGB':
-                        img = img.convert('RGB')
-                    images.append(img)
+                    if local_filepath.lower().endswith('.pdf'):
+                        pdf_reader = PdfReader(local_filepath)
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                        has_pages = True
+                    else:
+                        img = Image.open(local_filepath)
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                            
+                        temp_pdf = io.BytesIO()
+                        img.save(temp_pdf, format="PDF", resolution=100.0)
+                        temp_pdf.seek(0)
+                        
+                        pdf_reader = PdfReader(temp_pdf)
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                        has_pages = True
                 except Exception as e:
-                    print(f"Error opening image {local_filepath} for PDF merge: {e}")
+                    print(f"Error processing file {local_filepath} for PDF merge: {e}")
 
-        if not images:
+        if not has_pages:
             return jsonify({"status": "error", "message": "Could not read any valid images to merge."})
 
-        first_image = images[0]
-        other_images = images[1:]
+        with open(merged_pdf_path, "wb") as f_out:
+            pdf_writer.write(f_out)
         
-        first_image.save(
-            merged_pdf_path,
-            "PDF",
-            resolution=100.0,
-            save_all=True,
-            append_images=other_images
-        )
-        
-        return jsonify({"status": "success", "merged_url": f"/{merged_pdf_path}"})
+        return jsonify({"status": "success", "merged_url": f"/{merged_pdf_path.replace(os.sep, '/')}"})
 
     except Exception as e:
         import traceback
         print(f"Merge PDF Error: {e}\n{traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)})
 
+@app.route('/api/zip-images', methods=['POST'])
+def zip_images():
+    try:
+        data = request.json
+        colab_url = data.get('colab_url')
+        file_urls = data.get('files', [])
+        
+        if not file_urls:
+            return jsonify({"status": "error", "message": "No files provided."})
 
+        # Proxy to Cloud GPU if active
+        if colab_url:
+            headers = {'Bypass-Tunnel-Reminder': 'true', 'User-Agent': 'curl/7.68.0'}
+            cloud_payload = {"files": file_urls}
+            res = requests.post(f"{colab_url.rstrip('/')}/api/zip-images", json=cloud_payload, headers=headers)
+            cloud_json = res.json()
+            if cloud_json.get('status') == 'success':
+                zip_url = colab_url.rstrip('/') + cloud_json.get('zip_url')
+                proxy_url = f"/proxy-cloud-image?url={urllib.parse.quote(zip_url)}"
+                return jsonify({"status": "success", "zip_url": proxy_url})
+            return jsonify(cloud_json)
+
+        # Local Processing
+        import zipfile
+        zip_filename = f"Nexus_Batch_{uuid.uuid4().hex[:8]}.zip"
+        zip_path = os.path.join(OUTPUT_FOLDER, zip_filename)
+        
+        has_files = False
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for url in file_urls:
+                local_filepath = ensure_local_file(url)
+                
+                if local_filepath and os.path.exists(local_filepath):
+                    filename = os.path.basename(local_filepath)
+                    zipf.write(local_filepath, filename)
+                    has_files = True
+
+        if not has_files:
+            return jsonify({"status": "error", "message": "Could not read any valid images to zip."})
+            
+        return jsonify({"status": "success", "zip_url": f"/{zip_path.replace(os.sep, '/')}"})
+
+    except Exception as e:
+        import traceback
+        print(f"Zip Images Error: {e}\n{traceback.format_exc()}")
+        return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
     print("\n" + "="*50)

@@ -8,9 +8,17 @@
                                 <button id="batch-add-more-btn" onclick="document.getElementById('batch-file-input').click()" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2 hidden">
                                     <i class="ph-bold ph-plus"></i> Add More
                                 </button>
-                                <button id="batch-download-btn" onclick="downloadAllBatch()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/30 transition flex items-center gap-2 hidden">
-                                    <i class="ph-bold ph-download-simple"></i> Download All Completed
-                                </button>
+                                <div id="batch-download-group" class="hidden flex items-center gap-4">
+                                    <label id="batch-zip-toggle-wrapper" class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="batch-zip-toggle" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <span class="ml-2 text-sm font-bold text-slate-600">Zip Files</span>
+                                    </label>
+                                    <button id="batch-dl-main" onclick="downloadAllBatch()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center gap-2">
+                                        <i id="batch-dl-icon" class="ph-bold ph-download-simple"></i>
+                                        <span id="batch-dl-text">Download</span>
+                                    </button>
+                                </div>
                                 <button onclick="resetBatch()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition flex items-center gap-2">
                                     <i class="ph-bold ph-trash"></i> Clear Queue
                                 </button>

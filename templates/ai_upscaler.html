@@ -200,16 +200,7 @@
                     <div id="bottom-action-bar" class="hidden border-t border-slate-100 bg-white items-center justify-between p-4 shrink-0 rounded-b-2xl z-20 relative">
                         <span class="text-sm font-bold text-slate-800" id="bottom-file-name">filename.png</span>
                         
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-slate-500">Scroll Zoom</span>
-                            <label class="relative inline-flex items-center cursor-pointer mr-4">
-                                <input type="checkbox" id="toggle-scroll-zoom" class="sr-only peer" checked>
-                                <div class="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                            <button onclick="changeZoom(-10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-minus"></i></button>
-                            <span id="zoom-text" class="text-xs font-bold text-slate-700 w-12 text-center cursor-pointer" ondblclick="editZoomText(this, 'primary')" title="Double click to edit">100%</span>
-                            <button onclick="changeZoom(10)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50"><i class="ph-bold ph-plus"></i></button>
-                        </div>
+
 
                         <div class="flex gap-2">
                             <button class="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition" title="Preview">
@@ -489,8 +480,8 @@
                     btn.innerHTML = '<i class="ph-bold ph-lightning"></i> Run Batch Upscaler';
                     btn.classList.add('hidden');
                 }
-                const dlBtn = document.getElementById('batch-download-btn');
-                if(dlBtn) dlBtn.classList.add('hidden');
+                const dlGrp = document.getElementById('batch-download-group');
+                if(dlGrp) dlGrp.classList.add('hidden');
                 
                 const addMoreBtn = document.getElementById('batch-add-more-btn');
                 if(addMoreBtn) addMoreBtn.classList.add('hidden');
@@ -1050,7 +1041,27 @@
                 statusText.classList.remove('text-slate-500', 'text-green-500', 'text-orange-500', 'text-red-500');
                 
                 if (hasSuccess) {
-                    document.getElementById('batch-download-btn').classList.remove('hidden');
+                    const dlGrp = document.getElementById('batch-download-group');
+                    dlGrp.classList.remove('hidden');
+                    
+                    const format = document.getElementById('format-selected-text').innerText;
+                    const dlText = document.getElementById('batch-dl-text');
+                    const zipToggle = document.getElementById('batch-zip-toggle-wrapper');
+                    const dlBtn = document.getElementById('batch-dl-main');
+                    
+                    dlBtn.className = "px-5 py-3 text-white rounded-xl font-bold text-sm shadow-lg transition flex items-center gap-2 ";
+                    
+                    if (format.includes('PDF')) {
+                        zipToggle.classList.add('hidden');
+                        document.getElementById('batch-dl-icon').className = "ph-bold ph-file-pdf";
+                        dlBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'shadow-red-500/30');
+                        updateBatchDownloadButton(); // Dynamically check selected items
+                    } else {
+                        zipToggle.classList.remove('hidden');
+                        dlText.innerText = `Download ${format}`;
+                        document.getElementById('batch-dl-icon').className = "ph-bold ph-download-simple";
+                        dlBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-500/30');
+                    }
                     if (allSuccess) {
                         statusText.innerText = "All Complete! Ready for export.";
                         statusText.classList.add('text-green-500');
@@ -1061,6 +1072,22 @@
                 } else {
                     statusText.innerText = "All Failed. Check errors.";
                     statusText.classList.add('text-red-500');
+                    const dlGrp = document.getElementById('batch-download-group');
+                    dlGrp.classList.add('hidden');
+                }
+            }
+
+            function updateBatchDownloadButton() {
+                const format = document.getElementById('format-selected-text').innerText;
+                const dlText = document.getElementById('batch-dl-text');
+                
+                if (format.includes('PDF')) {
+                    const checkboxes = document.querySelectorAll('.batch-select-checkbox:checked');
+                    if (checkboxes.length > 0) {
+                        dlText.innerText = `Merge Selected (${checkboxes.length}) to PDF`;
+                    } else {
+                        dlText.innerText = "Merge ALL to PDF";
+                    }
                 }
             }
 
@@ -1175,23 +1202,40 @@
             }
 
             async function downloadAllBatch() {
-                const dlBtn = document.getElementById('batch-download-btn');
+                const dlBtn = document.getElementById('batch-dl-main');
+                if(!dlBtn) return;
+                
                 const origHtml = dlBtn.innerHTML;
                 dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Preparing...';
                 dlBtn.disabled = true;
                 
                 try {
-                    const exportFormat = document.querySelector('input[name="format"]:checked')?.value || 'PNG';
+                    const successResults = batchResults.filter(r => r && r.status === 'success');
+                    const exportFormat = document.getElementById('format-selected-text').innerText;
                     
-                    if (exportFormat === 'PDF') {
+                    if (exportFormat.includes('PDF')) {
                         dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Merging PDFs...';
-                        const filePaths = batchResults.map(r => r.master_file).filter(Boolean);
                         
-                        const colabUrl = document.getElementById('colab-url').value;
-                        const useColab = document.getElementById('use-colab').checked;
+                        let filePaths = [];
+                        let hasSelection = false;
+                        const checkboxes = document.querySelectorAll('.batch-select-checkbox');
+                        
+                        checkboxes.forEach((cb, idx) => {
+                            if (cb.checked && batchResults[idx] && batchResults[idx].status === 'success') {
+                                filePaths.push(batchResults[idx].master_file);
+                                hasSelection = true;
+                            }
+                        });
+                        
+                        if (!hasSelection) {
+                            filePaths = successResults.map(r => r.master_file).filter(Boolean);
+                        }
+                        
+                        const colabInput = document.getElementById('colab-url-input');
+                        const colabUrl = colabInput ? colabInput.value : '';
                         
                         const payload = { files: filePaths };
-                        if (useColab && colabUrl) {
+                        if (colabUrl) {
                             payload.colab_url = colabUrl;
                         }
 
@@ -1213,32 +1257,51 @@
                             alert("Failed to merge PDFs: " + mergeData.message);
                         }
                     } else {
-                        dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
-                        const zip = new JSZip();
-                        let hasFiles = false;
-                        const successResults = batchResults.filter(r => r && r.status === 'success');
+                        const zipEnabled = document.getElementById('batch-zip-toggle').checked;
                         
-                        for (let r of successResults) {
-                            try {
-                                const response = await fetch(r.master_file);
-                                const blob = await response.blob();
-                                zip.file(r.filename || "Nexus_Upscaled.jpg", blob);
-                                hasFiles = true;
-                            } catch(e) {
-                                console.error("Error fetching file for zip:", e);
+                        if (zipEnabled) {
+                            dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
+                            // Removed JSZip leftovers
+                            
+                            dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
+                            const filePaths = successResults.map(r => r.master_file).filter(Boolean);
+                            const colabInput = document.getElementById('colab-url-input');
+                            const colabUrl = colabInput ? colabInput.value : '';
+                            
+                            const payload = { files: filePaths };
+                            if (colabUrl) {
+                                payload.colab_url = colabUrl;
                             }
-                        }
-                        
-                        if (hasFiles) {
-                            dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
-                            const content = await zip.generateAsync({type:"blob"});
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(content);
-                            link.download = "Nexus_Batch_Upscaled.zip";
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            URL.revokeObjectURL(link.href);
+
+                            const zipRes = await fetch('/api/zip-images', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            const zipData = await zipRes.json();
+                            if (zipData.status === 'success') {
+                                const link = document.createElement('a');
+                                link.href = zipData.zip_url;
+                                link.download = "Nexus_Batch_Upscaled.zip";
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                alert("Failed to zip images: " + zipData.message);
+                            }
+                        } else {
+                            dlBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Fast Downloading...';
+                            for (let i = 0; i < successResults.length; i++) {
+                                const r = successResults[i];
+                                const link = document.createElement('a');
+                                link.href = r.master_file;
+                                link.download = r.filename || `Nexus_Upscaled_${i}.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                await new Promise(res => setTimeout(res, 200)); // Prevent browser blocking
+                            }
                         }
                     }
                 } catch(err) {
@@ -1662,6 +1725,7 @@
     <!-- Template for Batch Queue Items -->
     <template id="batch-card-template">
         <div class="bg-white border border-slate-200 rounded-2xl p-2.5 flex flex-col gap-2 relative shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <input type="checkbox" class="batch-select-checkbox absolute top-4 left-4 z-30 w-5 h-5 cursor-pointer accent-blue-600 shadow-sm opacity-0 group-hover:opacity-100 checked:opacity-100" title="Select for PDF Export" onclick="event.stopPropagation()" onchange="updateBatchDownloadButton()">
             <button class="batch-delete-btn absolute top-4 right-4 z-30 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100" title="Remove Image">
                 <i class="ph-bold ph-trash text-sm pointer-events-none"></i>
             </button>
