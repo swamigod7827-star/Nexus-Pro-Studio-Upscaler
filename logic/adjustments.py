@@ -32,11 +32,34 @@ def apply_pre_upscale_adjustments(img, artifact_rem, texture, face_skin):
 
 def apply_post_upscale_blend(upscaled, original_img, strength):
     h, w = upscaled.shape[:2]
-    # Strength Blending (Only applies if original is scaled up and blended)
+    
+    # 1. Strength Blending (Only applies if original is scaled up and blended)
     if strength < 1.0 and max(h, w) < 16384:
         try:
             base_img = cv2.resize(original_img, (w, h), interpolation=cv2.INTER_CUBIC)
             upscaled = cv2.addWeighted(upscaled, strength, base_img, 1.0 - strength, 0)
         except Exception:
             pass # Skip if RAM spikes
+            
+    # 2. Smart Grain Injection (Defeats the "Plastic/Painting" AI look)
+    # AI models destroy sensor noise. Adding 2-3% noise back makes it look like a real photograph.
+    try:
+        # Convert to LAB to only add noise to Luminance (avoids color noise artifacts)
+        lab = cv2.cvtColor(upscaled, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        
+        # Generate Gaussian noise matching the L channel dimensions
+        noise = np.zeros(l.shape, dtype=np.int16)
+        cv2.randn(noise, 0, 3) # mean 0, stddev 3 (subtle film grain)
+        
+        # Add noise and clip
+        l_noisy = cv2.add(l.astype(np.int16), noise)
+        l_noisy = np.clip(l_noisy, 0, 255).astype(np.uint8)
+        
+        # Merge back
+        lab_noisy = cv2.merge((l_noisy, a, b))
+        upscaled = cv2.cvtColor(lab_noisy, cv2.COLOR_LAB2BGR)
+    except Exception:
+        pass # Failsafe
+        
     return upscaled

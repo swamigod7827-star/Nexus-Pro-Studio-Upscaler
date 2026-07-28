@@ -75,22 +75,12 @@ class NexusGenerativeEngine:
         # 3. Upscale & Face Recovery
         out_h, out_w = img.shape[0] * self.target_scale, img.shape[1] * self.target_scale
         
+        update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
+        upscaled = perform_upscale(img, upsampler, self.target_scale)
+            
         if self.face_restore and face_enhancer is not None:
-            if max(out_h, out_w) > 16384:
-                update_progress(tracker, task_id, 30, "Applying Generative Face Restoration (Pre-Scaling)...")
-                img = apply_face_recovery(img, face_enhancer, self.face_weight)
-                
-                update_progress(tracker, task_id, 70, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
-                upscaled = perform_upscale(img, upsampler, self.target_scale)
-            else:
-                update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
-                upscaled = perform_upscale(img, upsampler, self.target_scale)
-                
-                update_progress(tracker, task_id, 70, "Applying Generative Face Restoration...")
-                upscaled = apply_face_recovery(upscaled, face_enhancer, self.face_weight)
-        else:
-            update_progress(tracker, task_id, 30, f"Processing {self.target_scale}X Upscaling & Generative Enhancements...")
-            upscaled = perform_upscale(img, upsampler, self.target_scale)
+            update_progress(tracker, task_id, 70, "Applying Generative Tiled Face Restoration...")
+            upscaled = apply_face_recovery(upscaled, face_enhancer, self.face_weight)
 
         # 4. Advanced Adjustments (Post)
         if self.strength < 1.0:
