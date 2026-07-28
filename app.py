@@ -4,7 +4,8 @@ from flask import Flask, request, jsonify, send_from_directory, Response, stream
 from flask_cors import CORS
 from logic.core_engine import process_upscale_logic
 from PIL import Image
-
+from pypdf import PdfWriter, PdfReader
+import io
 Image.MAX_IMAGE_PIXELS = None
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -353,15 +354,12 @@ def merge_pdfs():
             return jsonify(cloud_json)
 
         # Local Processing
-        from pypdf import PdfWriter, PdfReader
-        from PIL import Image
-        import io
-        
         merged_pdf_path = os.path.join(OUTPUT_FOLDER, f"Merged_Batch_{uuid.uuid4().hex[:8]}.pdf")
         
         pdf_writer = PdfWriter()
         has_pages = False
         
+        errors = []
         for url in file_urls:
             local_filepath = ensure_local_file(url)
             
@@ -386,10 +384,14 @@ def merge_pdfs():
                             pdf_writer.add_page(page)
                         has_pages = True
                 except Exception as e:
+                    errors.append(f"Error on {local_filepath}: {str(e)}")
                     print(f"Error processing file {local_filepath} for PDF merge: {e}")
+            else:
+                errors.append(f"File not found or invalid URL: {url}")
 
         if not has_pages:
-            return jsonify({"status": "error", "message": "Could not read any valid images to merge."})
+            error_details = " | ".join(errors)
+            return jsonify({"status": "error", "message": f"Could not read any valid images to merge. Details: {error_details}"})
 
         with open(merged_pdf_path, "wb") as f_out:
             pdf_writer.write(f_out)
